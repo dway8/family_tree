@@ -11,12 +11,15 @@ import Element.Events exposing (onClick)
 import Element.Font as Font
 import Html exposing (Html)
 import List.Extra as LE
+import Set
 import TypedSvg as Svg exposing (svg)
 import TypedSvg.Attributes as SA
 import TypedSvg.Attributes.InPx as InPx
 import TypedSvg.Core as SC
 import TypedSvg.Events as SE
 import TypedSvg.Types exposing (Align(..), CoordinateSystem(..), Cursor(..), Fill(..), Length(..), MeetOrSlice(..), Scale(..))
+import UI
+import UI.Color
 import Url exposing (Url)
 
 
@@ -39,7 +42,8 @@ subscriptions model =
 
 type alias Model =
     { tree : List Person
-    , lastName : String
+    , query : Maybe String
+    , lastName : Maybe String
     , relationships : List Relationship
     }
 
@@ -70,6 +74,8 @@ type alias Id =
 
 type Msg
     = NoOp
+    | SelectedPerson Person
+    | UpdatedSearchQuery String
     | SelectedLastName String
 
 
@@ -241,7 +247,8 @@ init flags url key =
             , { id = 5, children = [ 11, 27, 3, 13 ] }
             , { id = 6, children = [ 24, 25, 26 ] }
             ]
-      , lastName = "Manière"
+      , query = Nothing
+      , lastName = Nothing
       }
     , Cmd.none
     )
@@ -253,60 +260,105 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        SelectedPerson person ->
+            ( model, Cmd.none )
+
+        UpdatedSearchQuery query ->
+            ( { model | query = Just query }, Cmd.none )
+
         SelectedLastName lastName ->
-            ( { model | lastName = lastName }, Cmd.none )
+            ( { model | lastName = Just lastName, query = Nothing }, Cmd.none )
 
 
 view : Model -> Document Msg
 view model =
     { title = "My app"
     , body =
-        [ viewTree model ]
+        [ layout
+            [ Font.family
+                [ Font.external
+                    { name = "Roboto"
+                    , url = "https://fonts.googleapis.com/css?family=Roboto:300,300italic,400,400italic,700"
+                    }
+                ]
+            , height fill
+            , width fill
+            , Background.color (rgb255 250 250 250)
+            ]
+          <|
+            column [ width fill, height fill ]
+                [ viewQuery model
+                , viewTree model
+                ]
+        ]
     }
 
 
-viewTree : Model -> Html Msg
-viewTree { tree, relationships, lastName } =
-    let
-        allChildrenIds =
-            relationships |> List.concatMap .children
+viewQuery : Model -> Element Msg
+viewQuery model =
+    el
+        (case model.query of
+            Nothing ->
+                []
 
-        firstAncestor =
-            tree
-                |> List.filter
-                    (\person ->
-                        (person.lastName == lastName)
-                            && (not <| List.member person.id allChildrenIds)
-                    )
-                |> List.head
-    in
-    layout
-        [ Font.family
-            [ Font.external
-                { name = "Roboto"
-                , url = "https://fonts.googleapis.com/css?family=Roboto:300,300italic,400,400italic,700"
-                }
-            ]
-        , height fill
-        , width fill
-        , Background.color (rgb255 250 250 250)
-        ]
+            Just query ->
+                let
+                    matchingLastNames =
+                        model.tree
+                            |> List.map .lastName
+                            |> Set.fromList
+                            |> Set.toList
+                            |> List.filter (\n -> String.contains (String.toLower query) (String.toLower n))
+                in
+                [ below <|
+                    column [ Background.color UI.Color.white, padding 10 ]
+                        (matchingLastNames |> List.map (\n -> el [ pointer, onClick <| SelectedLastName n ] <| text n))
+                ]
+        )
     <|
-        el [ width fill, height fill ] <|
-            html <|
-                Svg.svg
-                    [ SA.width <| Px 1900
-                    , SA.height <| Px 600
-                    , SA.viewBox 0 0 1900 600
-                    , SA.preserveAspectRatio (Align ScaleMin ScaleMin) Meet
-                    ]
-                    (case firstAncestor of
-                        Nothing ->
-                            []
+        UI.textInput []
+            { onChange = UpdatedSearchQuery
+            , label = Nothing
+            , text = model.query |> Maybe.withDefault ""
+            , placeholder = Just <| text "Rechercher un nom..."
+            }
 
-                        Just ancestor ->
-                            [ viewPersonWithDescendants 0 600 100 tree relationships ancestor ]
-                    )
+
+viewTree : Model -> Element Msg
+viewTree ({ tree, relationships } as model) =
+    case model.lastName of
+        Nothing ->
+            none
+
+        Just lastName ->
+            let
+                allChildrenIds =
+                    relationships |> List.concatMap .children
+
+                firstAncestor =
+                    tree
+                        |> List.filter
+                            (\person ->
+                                (person.lastName == lastName)
+                                    && (not <| List.member person.id allChildrenIds)
+                            )
+                        |> List.head
+            in
+            el [ width fill, height fill ] <|
+                html <|
+                    Svg.svg
+                        [ SA.width <| Px 1900
+                        , SA.height <| Px 600
+                        , SA.viewBox 0 0 1900 600
+                        , SA.preserveAspectRatio (Align ScaleMin ScaleMin) Meet
+                        ]
+                        (case firstAncestor of
+                            Nothing ->
+                                []
+
+                            Just ancestor ->
+                                [ viewPersonWithDescendants 0 600 100 tree relationships ancestor ]
+                        )
 
 
 viewPersonWithDescendants : Int -> Float -> Float -> List Person -> List Relationship -> Person -> SC.Svg Msg
@@ -677,7 +729,7 @@ viewPersonBox fromFamily x y person =
             10
     in
     Svg.g
-        [ SE.onClick <| SelectedLastName person.lastName
+        [ SE.onClick <| SelectedPerson person
         , SA.cursor CursorPointer
         ]
         [ Svg.rect
