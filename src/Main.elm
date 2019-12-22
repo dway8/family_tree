@@ -292,9 +292,9 @@ viewTree { tree, lastName } =
         el [ width fill, height fill ] <|
             html <|
                 Svg.svg
-                    [ SA.width <| Px 1700
+                    [ SA.width <| Px 1900
                     , SA.height <| Px 600
-                    , SA.viewBox 0 0 1700 600
+                    , SA.viewBox 0 0 1900 600
                     , SA.preserveAspectRatio (Align ScaleMin ScaleMin) Meet
                     ]
                     (case firstAncestor of
@@ -651,6 +651,9 @@ viewPersonBox fromFamily x y person =
 
             else
                 Color.orange
+
+        paddingLeft =
+            10
     in
     Svg.g
         [ SE.onClick <| SelectedLastName person.lastName
@@ -673,8 +676,8 @@ viewPersonBox fromFamily x y person =
             ]
             []
         , Svg.text_
-            [ InPx.x (x + 10)
-            , InPx.y (y + 20)
+            [ InPx.x (x + paddingLeft)
+            , InPx.y (y + 16)
             , SA.fill <|
                 Fill
                     (if fromFamily then
@@ -685,8 +688,31 @@ viewPersonBox fromFamily x y person =
                     )
             , InPx.fontSize 12
             ]
-            [ SC.text <| getPersonName person ]
+            [ SC.text <| cropAndAddEllipsis 21 person.firstName ]
+        , Svg.text_
+            [ InPx.x (x + paddingLeft)
+            , InPx.y (y + 31)
+            , SA.fill <|
+                Fill
+                    (if fromFamily then
+                        Color.black
+
+                     else
+                        Color.charcoal
+                    )
+            , InPx.fontSize 12
+            ]
+            [ SC.text <| String.toUpper <| cropAndAddEllipsis 21 person.lastName ]
         ]
+
+
+cropAndAddEllipsis : Int -> String -> String
+cropAndAddEllipsis maxLength str =
+    if String.length str <= maxLength then
+        str
+
+    else
+        String.left (maxLength - 3) str ++ "..."
 
 
 getPersonName : Person -> String
