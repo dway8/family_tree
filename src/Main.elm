@@ -151,13 +151,13 @@ init flags url key =
               , firstName = "Nicole"
               , lastName = "de Kernafflen de Kergos"
               , sex = Female
-              , relationship = Just { spouse = 15, children = [ 11, 3, 13 ] }
+              , relationship = Just { spouse = 15, children = [ 11, 27, 3, 13 ] }
               }
             , { id = 15
               , firstName = "Paul-Henry"
               , lastName = "Manière"
               , sex = Female
-              , relationship = Just { spouse = 14, children = [ 11, 3, 13 ] }
+              , relationship = Just { spouse = 14, children = [ 11, 27, 3, 13 ] }
               }
             , { id = 16
               , firstName = "Martine"
@@ -169,7 +169,7 @@ init flags url key =
               , firstName = "Bruno"
               , lastName = "Jantet"
               , sex = Male
-              , relationship = Nothing
+              , relationship = Just { spouse = 23, children = [ 24, 25, 26 ] }
               }
             , { id = 18
               , firstName = "Melchior"
@@ -200,6 +200,42 @@ init flags url key =
               , lastName = "Manière"
               , sex = Female
               , relationship = Nothing
+              }
+            , { id = 23
+              , firstName = "Isabelle"
+              , lastName = "Giraud"
+              , sex = Female
+              , relationship = Just { spouse = 17, children = [ 24, 25, 26 ] }
+              }
+            , { id = 24
+              , firstName = "Benoît"
+              , lastName = "Jantet"
+              , sex = Male
+              , relationship = Just { spouse = 28, children = [] }
+              }
+            , { id = 25
+              , firstName = "Henry"
+              , lastName = "Jantet"
+              , sex = Male
+              , relationship = Nothing
+              }
+            , { id = 26
+              , firstName = "Constant"
+              , lastName = "Jantet"
+              , sex = Male
+              , relationship = Nothing
+              }
+            , { id = 27
+              , firstName = "Roseline"
+              , lastName = "Manière"
+              , sex = Female
+              , relationship = Nothing
+              }
+            , { id = 28
+              , firstName = "Amandine"
+              , lastName = "Gros"
+              , sex = Female
+              , relationship = Just { spouse = 24, children = [] }
               }
             ]
       , lastName = "Manière"
@@ -253,7 +289,7 @@ viewTree { tree, lastName } =
         , Background.color (rgb255 250 250 250)
         ]
     <|
-        el [ padding 20, width fill, height fill ] <|
+        el [ width fill, height fill ] <|
             html <|
                 Svg.svg
                     [ SA.width <| Px 1700
@@ -273,6 +309,8 @@ viewTree { tree, lastName } =
 viewPersonWithDescendants : Int -> Float -> Float -> List Person -> Person -> SC.Svg Msg
 viewPersonWithDescendants level originX originY tree person =
     let
+        -- _ =
+        --     Debug.log ("----------" ++ person.firstName) ""
         hasAncestors =
             level /= 0
     in
@@ -282,9 +320,9 @@ viewPersonWithDescendants level originX originY tree person =
                 -- vertical line on top of child
                 [ SA.stroke Color.darkGrey
                 , SA.strokeWidth <| Px 1
-                , InPx.x1 (originX + (personWidth / 2))
+                , InPx.x1 (originX + personWidth / 2)
                 , InPx.y1 (originY - (personHeight / 2))
-                , InPx.x2 (originX + (personWidth / 2))
+                , InPx.x2 (originX + personWidth / 2)
                 , InPx.y2 originY
                 ]
                 []
@@ -292,6 +330,8 @@ viewPersonWithDescendants level originX originY tree person =
           else
             SC.text ""
         , viewPersonBox True originX originY person
+
+        -- , viewPersonBox True (originX - personWidth / 2) originY person
         , person.relationship
             |> Maybe.map
                 (\rel ->
@@ -307,104 +347,98 @@ viewPersonWithDescendants level originX originY tree person =
                                 spouseX =
                                     originX + personWidth + widthBetweenSpouses
 
-                                numberOfChildren =
-                                    List.length rel.children
-
                                 centerX =
                                     originX + (parentsWidth / 2)
 
-                                absoluteChildrenBoundsByLevel =
+                                absoluteFirstSiblingX1 =
                                     getChildrenBounds originX tree person
+                                        |> Dict.get 0
+                                        |> Maybe.map .x1
+                                        |> Maybe.withDefault 0
 
-                                directChildrenBounds =
-                                    Dict.get 0 absoluteChildrenBoundsByLevel
-                                        |> Maybe.withDefault (Bounds 0 0)
-
-                                childrenOrigin =
-                                    directChildrenBounds.x1
-
-                                positionAndViewForEachChild : List ( Float, SC.Svg Msg )
-                                positionAndViewForEachChild =
+                                -- |> Debug.log ("children origin for " ++ person.firstName)
+                                positionAndViewForEachChild : Float -> List ( Float, SC.Svg Msg )
+                                positionAndViewForEachChild finalOffset =
                                     rel.children
                                         |> List.indexedMap Tuple.pair
                                         |> Dict.fromList
                                         |> Dict.foldl
-                                            (\idx childId acc ->
+                                            (\idx childId positionAndViewChildrenAcc ->
                                                 case getPersonFromId tree childId of
                                                     Nothing ->
-                                                        acc
+                                                        positionAndViewChildrenAcc
 
                                                     Just child ->
                                                         let
                                                             absolutePreviousSiblingPosition =
-                                                                childrenOrigin
-                                                                    + ((personWidth + widthBetweenSiblings) * toFloat (idx - 1))
-                                                                    + ((personWidth + widthBetweenSpouses) * toFloat (getNumberOfPreviousSiblingsSpouses children (idx - 1)))
+                                                                getAbsolutePosition absoluteFirstSiblingX1 children (idx - 1)
 
                                                             previousSiblingPosition =
-                                                                Dict.get (idx - 1) acc
+                                                                Dict.get (idx - 1) positionAndViewChildrenAcc
                                                                     |> Maybe.map Tuple.first
                                                                     |> Maybe.withDefault absolutePreviousSiblingPosition
 
-                                                            absolutePosition =
-                                                                childrenOrigin
-                                                                    + ((personWidth + widthBetweenSiblings) * toFloat idx)
-                                                                    + ((personWidth + widthBetweenSpouses) * toFloat (getNumberOfPreviousSiblingsSpouses children idx))
-                                                                    + (previousSiblingPosition - absolutePreviousSiblingPosition)
+                                                            previousSiblingOffset =
+                                                                previousSiblingPosition - absolutePreviousSiblingPosition
 
-                                                            directChildChildrenBounds =
+                                                            absolutePosition =
+                                                                getAbsolutePosition absoluteFirstSiblingX1 children idx
+                                                                    + previousSiblingOffset
+
+                                                            -- |> Debug.log ("absolute position for" ++ child.firstName)
+                                                            childrenBounds =
                                                                 getChildrenBounds absolutePosition tree child
 
-                                                            previousSiblingsMaxX2ForEachLevel =
-                                                                getPreviousSiblingsMaxX2ForEachLevel childrenOrigin tree rel.children idx
+                                                            maxX2ByLevel =
+                                                                getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc absoluteFirstSiblingX1 tree children idx
 
-                                                            overlapForEachLevel =
-                                                                directChildChildrenBounds
-                                                                    |> Dict.foldr
-                                                                        (\l bounds overlapAcc ->
-                                                                            let
-                                                                                maybePreviousSiblingsLevelMaxX2 =
-                                                                                    Dict.get l previousSiblingsMaxX2ForEachLevel
-                                                                            in
-                                                                            case maybePreviousSiblingsLevelMaxX2 of
-                                                                                Just maxX2 ->
-                                                                                    overlapAcc
-                                                                                        |> Dict.insert l
-                                                                                            (if maxX2 > bounds.x1 then
-                                                                                                maxX2 - bounds.x1 + widthBetweenSiblings
+                                                            offset =
+                                                                getOffset childrenBounds maxX2ByLevel
 
-                                                                                             else
-                                                                                                0
-                                                                                            )
-
-                                                                                Nothing ->
-                                                                                    overlapAcc
-                                                                        )
-                                                                        Dict.empty
-
-                                                            maxOverlap =
-                                                                overlapForEachLevel
-                                                                    |> Dict.values
-                                                                    |> List.maximum
-                                                                    |> Maybe.withDefault 0
-
+                                                            -- |> Debug.log ("offset for " ++ child.firstName)
                                                             x1 =
-                                                                absolutePosition + maxOverlap
+                                                                absolutePosition
+                                                                    + offset
+
+                                                            -- |> Debug.log ("X1 for " ++ child.firstName)
                                                         in
-                                                        acc
+                                                        positionAndViewChildrenAcc
                                                             |> Dict.insert idx
                                                                 ( x1
-                                                                , child |> viewPersonWithDescendants (level + 1) x1 (originY + heightBetweenParentsAndChildren) tree
+                                                                , child |> viewPersonWithDescendants (level + 1) (x1 + finalOffset - personWidth / 2) (originY + heightBetweenParentsAndChildren) tree
+                                                                  -- , child |> viewPersonWithDescendants (level + 1) x1 (originY + heightBetweenParentsAndChildren) tree
                                                                 )
                                             )
                                             Dict.empty
                                         |> Dict.values
+
+                                minX =
+                                    positionAndViewForEachChild 0
+                                        |> List.map Tuple.first
+                                        |> List.minimum
+                                        |> Maybe.withDefault 0
+
+                                maxX =
+                                    positionAndViewForEachChild 0
+                                        |> List.map Tuple.first
+                                        |> List.maximum
+                                        |> Maybe.withDefault 0
+
+                                currentChildrenCenterX =
+                                    minX
+                                        + ((maxX - minX) / 2)
+
+                                -- |> Debug.log ("currentchildrencenterX for " ++ person.firstName)
+                                offsetToCenter =
+                                    -(currentChildrenCenterX - centerX)
                             in
                             Svg.g []
                                 ([ Svg.line
                                     -- horiz line between spouses
                                     [ SA.stroke Color.darkGrey
                                     , SA.strokeWidth <| Px 1
+
+                                    -- , InPx.x1 (originX + 150)
                                     , InPx.x1 (originX + 150)
                                     , InPx.y1 (originY + (personHeight / 2))
                                     , InPx.x2 spouseX
@@ -429,32 +463,21 @@ viewPersonWithDescendants level originX originY tree person =
                                     SC.text ""
 
                                    else
-                                    let
-                                        minX =
-                                            positionAndViewForEachChild
-                                                |> List.map Tuple.first
-                                                |> List.minimum
-                                                |> Maybe.withDefault 0
-
-                                        maxX =
-                                            positionAndViewForEachChild
-                                                |> List.map Tuple.first
-                                                |> List.maximum
-                                                |> Maybe.withDefault 0
-                                    in
                                     Svg.line
                                         -- horiz line on top of children
                                         [ SA.stroke Color.darkGrey
                                         , SA.strokeWidth <| Px 1
-                                        , InPx.x1 (minX + (personWidth / 2))
+                                        , InPx.x1 (minX + offsetToCenter)
                                         , InPx.y1 (originY + (personHeight / 2) + (heightBetweenParentsAndChildren / 2))
-                                        , InPx.x2 (maxX + (personWidth / 2))
+
+                                        -- , InPx.x2 ((maxX + offsetToCenter) + (personWidth / 2))
+                                        , InPx.x2 (maxX + offsetToCenter)
                                         , InPx.y2 (originY + (personHeight / 2) + (heightBetweenParentsAndChildren / 2))
                                         ]
                                         []
                                  , viewPersonBox False spouseX originY spouse
                                  ]
-                                    ++ (positionAndViewForEachChild |> List.map Tuple.second)
+                                    ++ (positionAndViewForEachChild offsetToCenter |> List.map Tuple.second)
                                 )
                 )
             |> Maybe.withDefault (SC.text "")
@@ -484,32 +507,34 @@ getNumberOfPreviousSiblingsSpouses children currentIndex =
             0
 
 
-getPreviousSiblingsMaxX2ForEachLevel : Float -> List Person -> List Id -> Int -> Dict Int Float
-getPreviousSiblingsMaxX2ForEachLevel childrenOrigin tree childrenIds currentIndex =
+getPreviousSiblingsMaxX2ForEachLevel : Dict Int ( Float, SC.Svg Msg ) -> Float -> List Person -> List Person -> Int -> Dict Int Float
+getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc firstSiblingX1 tree children currentIndex =
     let
-        indexesToLookUp =
-            List.range 0 (currentIndex - 1)
+        getPreviousSiblingBounds ix sib =
+            Dict.get ix positionAndViewChildrenAcc
+                |> Maybe.map Tuple.first
+                |> Maybe.withDefault (getAbsolutePosition firstSiblingX1 children ix)
+                |> (\pos -> getChildrenBounds pos tree sib)
     in
-    indexesToLookUp
+    List.range 0 (currentIndex - 1)
         |> List.foldl
-            (\idx acc ->
-                LE.getAt idx childrenIds
-                    |> Maybe.andThen (getPersonFromId tree)
+            (\idx maxX2ByLevelAcc ->
+                LE.getAt idx children
                     |> Maybe.map
-                        (\child ->
+                        (\previousSibling ->
                             let
-                                currentChildrenBounds =
-                                    getChildrenBounds childrenOrigin tree child
+                                bounds =
+                                    getPreviousSiblingBounds idx previousSibling
                             in
-                            currentChildrenBounds
+                            bounds
                                 |> Dict.foldl
-                                    (\k { x2 } acc2 ->
-                                        acc2
-                                            |> Dict.update k (\maybeVal -> max x2 (maybeVal |> Maybe.withDefault 0) |> Just)
+                                    (\l b bAcc ->
+                                        bAcc
+                                            |> Dict.update l (\maybeX2 -> max b.x2 (maybeX2 |> Maybe.withDefault 0) |> Just)
                                     )
-                                    acc
+                                    maxX2ByLevelAcc
                         )
-                    |> Maybe.withDefault acc
+                    |> Maybe.withDefault maxX2ByLevelAcc
             )
             Dict.empty
 
@@ -674,3 +699,43 @@ getPersonFromId tree id =
     tree
         |> List.filter (.id >> (==) id)
         |> List.head
+
+
+getOffset : Dict Int Bounds -> Dict Int Float -> Float
+getOffset childrenBoundsByLevel previousBoundsByLevel =
+    let
+        overlapByLevel =
+            childrenBoundsByLevel
+                |> Dict.foldr
+                    (\l bounds overlapAcc ->
+                        let
+                            maybeMaxX2ForLevel =
+                                Dict.get l previousBoundsByLevel
+                        in
+                        case maybeMaxX2ForLevel of
+                            Just maxX2 ->
+                                overlapAcc
+                                    |> Dict.insert l
+                                        (if maxX2 > bounds.x1 then
+                                            maxX2 - bounds.x1 + widthBetweenSiblings
+
+                                         else
+                                            0
+                                        )
+
+                            Nothing ->
+                                overlapAcc
+                    )
+                    Dict.empty
+    in
+    overlapByLevel
+        |> Dict.values
+        |> List.maximum
+        |> Maybe.withDefault 0
+
+
+getAbsolutePosition : Float -> List Person -> Int -> Float
+getAbsolutePosition childrenOrigin children idx =
+    childrenOrigin
+        + ((personWidth + widthBetweenSiblings) * toFloat idx)
+        + ((personWidth + widthBetweenSpouses) * toFloat (getNumberOfPreviousSiblingsSpouses children idx))
