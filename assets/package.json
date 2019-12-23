@@ -2,12 +2,15 @@
   "repository": {},
   "license": "MIT",
   "scripts": {
-    "dev": "webpack-dev-server --mode=development --hot --inline --config webpack.config.js --port 8001 --host 0.0.0.0 --public 0.0.0.0:8001",
     "build": "webpack --mode=production --progress",
     "watch": "webpack --mode=development --watch",
-    "elm": "elm"
+    "elm": "elm",
+    "api": "elm-graphql http://localhost:4000/elixir/graphql --base Aisf --output src/"
   },
   "dependencies": {
+    "@dillonkearns/elm-graphql": "^3.4.0",
+    "phoenix": "file:../deps/phoenix",
+    "phoenix_html": "file:../deps/phoenix_html"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^4.5.0",

@@ -16,13 +16,10 @@ let isProd = TARGET_ENV === prod;
 
 console.log(`WEBPACK GO! Building for ${TARGET_ENV}`);
 
-let outputPath = path.resolve(__dirname + "/dist");
-let outputFilename = "app.js";
-
 let commonConfig = {
     output: {
-        path: outputPath,
-        filename: outputFilename,
+        filename: "app.js",
+        path: path.resolve(__dirname, "../priv/static/js"),
     },
     performance: {
         hints: false,
@@ -43,7 +40,9 @@ let commonConfig = {
             filename: "../css/app.css",
         }),
     ],
-
+    entry: {
+        "./js/app.js": ["./js/app.js"].concat(glob.sync("./vendor/**/*.js")),
+    },
     module: {
         rules: [
             {
@@ -64,9 +63,7 @@ let commonConfig = {
 
 const devConfig = {
     devtool: "source-map",
-    entry: path.join(__dirname, "./static/index.js"),
     devServer: {
-        contentBase: [".", "./static", "./assets"],
         headers: {
             "Access-Control-Allow-Origin": "*",
         },
@@ -127,6 +124,7 @@ const devConfig = {
                             verbose: true,
                             // warn: true,
                             debug: true,
+                            pathToElm: "./node_modules/.bin/elm",
                         },
                     },
                 ],
@@ -137,7 +135,6 @@ const devConfig = {
 
 if (isDev === true) {
     console.log("Serving locally...");
-    console.log("-------", commonConfig.entry);
     module.exports = function() {
         return merge(commonConfig, devConfig);
     };
