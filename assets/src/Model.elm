@@ -1,12 +1,21 @@
 module Model exposing (..)
 
+import FamilyTree.Scalar exposing (Id(..))
+import Graphql.Http
+import RemoteData exposing (RemoteData(..), WebData)
+
 
 type alias Model =
-    { tree : List Person
+    { family : Family
     , query : Maybe String
     , lastName : Maybe String
-    , relationships : List Relationship
     , personDialog : Maybe PersonDialogConfig
+    }
+
+
+type alias Family =
+    { tree : List Person
+    , relationships : List Relationship
     }
 
 
@@ -28,10 +37,6 @@ type alias Relationship =
 type Sex
     = Male
     | Female
-
-
-type alias Id =
-    Int
 
 
 type alias Bounds =
@@ -59,6 +64,7 @@ type Msg
     | AddSpouseButtonPressed
     | NewSpouseNameUpdated PersonField String
     | ConfirmRelationshipButtonPressed
+    | GotFamily (RemoteData (Graphql.Http.Error Family) Family)
 
 
 personWidth : Float

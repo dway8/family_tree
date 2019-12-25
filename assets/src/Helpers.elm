@@ -1,8 +1,9 @@
 module Helpers exposing (..)
 
 import Dict exposing (Dict)
+import FamilyTree.Scalar exposing (Id(..))
 import List.Extra as LE
-import Model exposing (Bounds, Id, Msg, Person, Relationship)
+import Model exposing (Bounds, Msg, Person, Relationship)
 import TypedSvg.Core as SC
 
 

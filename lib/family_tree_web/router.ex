@@ -19,6 +19,20 @@ defmodule FamilyTreeWeb.Router do
     get "/", PageController, :index
   end
 
+  # graphql API scope
+  scope "/elixir" do
+    forward("/graphql", Absinthe.Plug, schema: FamilyTreeWeb.Schema)
+  end
+
+  scope "/elixir" do
+    pipe_through :api
+
+    forward "/graphiql", Absinthe.Plug.GraphiQL,
+      schema: FamilyTreeWeb.Schema,
+      interface: :simple,
+      context: %{pubsub: FamilyTreeWeb.Endpoint}
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", FamilyTreeWeb do
   #   pipe_through :api
