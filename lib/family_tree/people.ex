@@ -1,6 +1,6 @@
 defmodule FamilyTree.People do
   alias FamilyTree.Models.Person
-	alias FamilyTree.Repo
+  alias FamilyTree.Repo
 
   def get_people() do
     Repo.all(Person)

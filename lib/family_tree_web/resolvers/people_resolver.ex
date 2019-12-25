@@ -14,6 +14,28 @@ defmodule FamilyTreeWeb.PeopleResolver do
             {:error, "Error when fetching relationships"}
 
           relationships ->
+            people =
+              people
+              |> Enum.map(fn person ->
+                searchFn =
+                  if person.sex == "Male" do
+                    fn rel -> rel.father_id == person.id end
+                  else
+                    fn rel -> rel.mother_id == person.id end
+                  end
+
+                personRel =
+                  relationships
+                  |> Enum.find(searchFn)
+
+                if personRel do
+                  person
+                  |> Map.put(:relationship_id, personRel.id)
+                else
+                  person
+                end
+              end)
+
             family = %{people: people, relationships: relationships}
             {:ok, family}
         end
