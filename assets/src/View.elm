@@ -90,7 +90,7 @@ viewQuery model =
 viewTree : Model -> Element Msg
 viewTree model =
     case ( model.family, model.lastName ) of
-        ( Success { tree, relationships }, Just lastName ) ->
+        ( Success ({ tree, relationships } as family), Just lastName ) ->
             let
                 allChildrenIds =
                     relationships |> List.concatMap .children
@@ -117,15 +117,15 @@ viewTree model =
                                 []
 
                             Just ancestor ->
-                                [ viewPersonWithDescendants 0 600 100 tree relationships ancestor ]
+                                [ viewPersonWithDescendants 0 600 100 family ancestor ]
                         )
 
         _ ->
             none
 
 
-viewPersonWithDescendants : Int -> Float -> Float -> List Person -> List Relationship -> Person -> SC.Svg Msg
-viewPersonWithDescendants level originX originY tree relationships person =
+viewPersonWithDescendants : Int -> Float -> Float -> Family -> Person -> SC.Svg Msg
+viewPersonWithDescendants level originX originY ({ tree, relationships } as family) person =
     let
         -- _ =
         --     Debug.log ("----------" ++ person.firstName) ""
@@ -180,7 +180,7 @@ viewPersonWithDescendants level originX originY tree relationships person =
                                             originX + (parentsWidth / 2)
 
                                         absoluteFirstSiblingX1 =
-                                            Helpers.getChildrenBounds originX tree relationships person
+                                            Helpers.getChildrenBounds originX family person
                                                 |> Dict.get 0
                                                 |> Maybe.map .x1
                                                 |> Maybe.withDefault 0
@@ -216,10 +216,10 @@ viewPersonWithDescendants level originX originY tree relationships person =
 
                                                                     -- |> Debug.log ("absolute position for" ++ child.firstName)
                                                                     childrenBounds =
-                                                                        Helpers.getChildrenBounds absolutePosition tree relationships child
+                                                                        Helpers.getChildrenBounds absolutePosition family child
 
                                                                     maxX2ByLevel =
-                                                                        Helpers.getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc absoluteFirstSiblingX1 tree relationships children idx
+                                                                        Helpers.getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc absoluteFirstSiblingX1 family children idx
 
                                                                     offset =
                                                                         Helpers.getOffset childrenBounds maxX2ByLevel
@@ -234,8 +234,7 @@ viewPersonWithDescendants level originX originY tree relationships person =
                                                                 positionAndViewChildrenAcc
                                                                     |> Dict.insert idx
                                                                         ( x1
-                                                                        , child |> viewPersonWithDescendants (level + 1) (x1 + finalOffset - personWidth / 2) (originY + heightBetweenParentsAndChildren) tree relationships
-                                                                          -- , child |> viewPersonWithDescendants (level + 1) x1 (originY + heightBetweenParentsAndChildren) tree
+                                                                        , child |> viewPersonWithDescendants (level + 1) (x1 + finalOffset - personWidth / 2) (originY + heightBetweenParentsAndChildren) family
                                                                         )
                                                     )
                                                     Dict.empty

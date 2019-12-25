@@ -3,7 +3,7 @@ module Helpers exposing (..)
 import Dict exposing (Dict)
 import FamilyTree.Scalar exposing (Id(..))
 import List.Extra as LE
-import Model exposing (Bounds, Msg, Person, Relationship)
+import Model exposing (Bounds, Family, Msg, Person)
 import TypedSvg.Core as SC
 
 
@@ -47,12 +47,12 @@ getAbsolutePosition childrenOrigin children idx =
         + ((Model.personWidth + Model.widthBetweenSpouses) * toFloat (getNumberOfPreviousSiblingsSpouses children idx))
 
 
-getChildrenBounds : Float -> List Person -> List Relationship -> Person -> Dict Int Bounds
-getChildrenBounds parentX1 tree relationships currentPerson =
+getChildrenBounds : Float -> Family -> Person -> Dict Int Bounds
+getChildrenBounds parentX1 ({ tree, relationships } as family) currentPerson =
     let
         descendants : Dict Int (List Person)
         descendants =
-            getPersonDescendants 0 tree relationships currentPerson Dict.empty
+            getPersonDescendants 0 family currentPerson Dict.empty
 
         parentsCenter =
             parentX1 + (Model.parentsWidth / 2)
@@ -107,14 +107,14 @@ getNumberOfPreviousSiblingsSpouses children currentIndex =
             0
 
 
-getPreviousSiblingsMaxX2ForEachLevel : Dict Int ( Float, SC.Svg Msg ) -> Float -> List Person -> List Relationship -> List Person -> Int -> Dict Int Float
-getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc firstSiblingX1 tree relationships children currentIndex =
+getPreviousSiblingsMaxX2ForEachLevel : Dict Int ( Float, SC.Svg Msg ) -> Float -> Family -> List Person -> Int -> Dict Int Float
+getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc firstSiblingX1 family children currentIndex =
     let
         getPreviousSiblingBounds ix sib =
             Dict.get ix positionAndViewChildrenAcc
                 |> Maybe.map Tuple.first
                 |> Maybe.withDefault (getAbsolutePosition firstSiblingX1 children ix)
-                |> (\pos -> getChildrenBounds pos tree relationships sib)
+                |> (\pos -> getChildrenBounds pos family sib)
     in
     List.range 0 (currentIndex - 1)
         |> List.foldl
@@ -139,8 +139,8 @@ getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc firstSiblingX1 t
             Dict.empty
 
 
-getPersonDescendants : Int -> List Person -> List Relationship -> Person -> Dict Int (List Person) -> Dict Int (List Person)
-getPersonDescendants level tree relationships currentPerson currentDict =
+getPersonDescendants : Int -> Family -> Person -> Dict Int (List Person) -> Dict Int (List Person)
+getPersonDescendants level ({ tree, relationships } as family) currentPerson currentDict =
     let
         addChildToDescendantsAcc child acc =
             acc
@@ -163,7 +163,7 @@ getPersonDescendants level tree relationships currentPerson currentDict =
                                         Just child ->
                                             acc
                                                 |> addChildToDescendantsAcc child
-                                                |> getPersonDescendants (level + 1) tree relationships child
+                                                |> getPersonDescendants (level + 1) family child
 
                                         Nothing ->
                                             acc
