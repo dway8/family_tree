@@ -6,7 +6,7 @@ import RemoteData exposing (RemoteData(..), WebData)
 
 
 type alias Model =
-    { family : Family
+    { family : RemoteData (Graphql.Http.Error Family) Family
     , query : Maybe String
     , lastName : Maybe String
     , personDialog : Maybe PersonDialogConfig

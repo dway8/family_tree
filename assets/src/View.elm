@@ -10,6 +10,7 @@ import Element.Events exposing (onClick)
 import Element.Font as Font
 import Helpers
 import Model exposing (..)
+import RemoteData as RD exposing (RemoteData(..))
 import Set
 import TypedSvg as Svg exposing (svg)
 import TypedSvg.Attributes as SA
@@ -37,12 +38,12 @@ view model =
              , width fill
              , Background.color (rgb255 250 250 250)
              ]
-                ++ (case model.personDialog of
-                        Nothing ->
-                            []
+                ++ (case ( model.family, model.personDialog ) of
+                        ( Success family, Just personDialogConfig ) ->
+                            [ inFront <| UI.viewDialog <| viewPersonDialog family.tree personDialogConfig ]
 
-                        Just personDialogConfig ->
-                            [ inFront <| UI.viewDialog <| viewPersonDialog model.tree personDialogConfig ]
+                        _ ->
+                            []
                    )
             )
           <|
@@ -64,7 +65,9 @@ viewQuery model =
             Just query ->
                 let
                     matchingLastNames =
-                        model.tree
+                        model.family
+                            |> RD.map .tree
+                            |> RD.withDefault []
                             |> List.map .lastName
                             |> Set.fromList
                             |> Set.toList
@@ -85,12 +88,9 @@ viewQuery model =
 
 
 viewTree : Model -> Element Msg
-viewTree ({ tree, relationships } as model) =
-    case model.lastName of
-        Nothing ->
-            none
-
-        Just lastName ->
+viewTree model =
+    case ( model.family, model.lastName ) of
+        ( Success { tree, relationships }, Just lastName ) ->
             let
                 allChildrenIds =
                     relationships |> List.concatMap .children
@@ -119,6 +119,9 @@ viewTree ({ tree, relationships } as model) =
                             Just ancestor ->
                                 [ viewPersonWithDescendants 0 600 100 tree relationships ancestor ]
                         )
+
+        _ ->
+            none
 
 
 viewPersonWithDescendants : Int -> Float -> Float -> List Person -> List Relationship -> Person -> SC.Svg Msg

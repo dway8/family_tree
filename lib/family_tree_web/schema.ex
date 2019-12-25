@@ -24,8 +24,7 @@ defmodule FamilyTreeWeb.Schema do
 
   query do
     field :family, non_null(:family) do
-      arg(:last_name, non_null(:string))
-      resolve(&PeopleResolver.family/3)
+      resolve(&PeopleResolver.get_all/3)
     end
 
     #

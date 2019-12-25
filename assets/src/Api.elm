@@ -16,9 +16,9 @@ endpoint =
     "/elixir/graphql"
 
 
-getFamily : String -> Cmd Msg
-getFamily lastName =
-    Query.family { lastName = lastName } familySelection
+getFamily : Cmd Msg
+getFamily =
+    Query.family familySelection
         |> Graphql.Http.queryRequest endpoint
         -- We have to use `withCredentials` to support a CORS endpoint that allows a wildcard origin
         |> Graphql.Http.withCredentials

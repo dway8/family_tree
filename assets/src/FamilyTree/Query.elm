@@ -19,10 +19,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
-type alias FamilyRequiredArguments =
-    { lastName : String }
-
-
-family : FamilyRequiredArguments -> SelectionSet decodesTo FamilyTree.Object.Family -> SelectionSet decodesTo RootQuery
-family requiredArgs object_ =
-    Object.selectionForCompositeField "family" [ Argument.required "lastName" requiredArgs.lastName Encode.string ] object_ identity
+family : SelectionSet decodesTo FamilyTree.Object.Family -> SelectionSet decodesTo RootQuery
+family object_ =
+    Object.selectionForCompositeField "family" [] object_ identity

@@ -1,9 +1,22 @@
 defmodule FamilyTreeWeb.PeopleResolver do
   require Logger
 
-  def family(_root, _args, _info) do
-    # champions = Champions.list_champions_lite()
-    family = %{}
-    {:ok, family}
+  alias FamilyTree.{People, Relationships}
+
+  def get_all(_root, _args, _info) do
+    case People.get_people() do
+      nil ->
+        {:error, "Error when fetching people"}
+
+      people ->
+        case Relationships.get_relationships() do
+          nil ->
+            {:error, "Error when fetching relationships"}
+
+          relationships ->
+            family = %{people: people, relationships: relationships}
+            {:ok, family}
+        end
+    end
   end
 end

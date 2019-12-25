@@ -9,3 +9,13 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+alias FamilyTree.Repo
+alias FamilyTree.Models.{Person, Relationship}
+
+%Person{
+  last_name: "Manière",
+  first_name: "Olivier",
+  sex: "Male"
+}
+|> Repo.insert!()
