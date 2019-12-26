@@ -2,7 +2,7 @@ defmodule FamilyTreeWeb.Schema do
   use Absinthe.Schema
   use Absinthe.Ecto, repo: App.Repo
 
-  alias FamilyTreeWeb.PeopleResolver
+  alias FamilyTreeWeb.FamilyResolver
 
   object :person do
     field(:id, non_null(:id))
@@ -24,7 +24,7 @@ defmodule FamilyTreeWeb.Schema do
 
   query do
     field :family, non_null(:family) do
-      resolve(&PeopleResolver.get_all/3)
+      resolve(&FamilyResolver.get_all/3)
     end
 
     #
@@ -34,20 +34,18 @@ defmodule FamilyTreeWeb.Schema do
     # end
   end
 
-  # mutation do
-  # field :create_champion, type: :champion do
-  #   arg(:first_name, non_null(:string))
-  #   arg(:last_name, non_null(:string))
-  #   arg(:sport, non_null(:string))
-  #   arg(:is_member, non_null(:boolean))
-  #
-  #   resolve(&ChampionsResolver.create/2)
-  # end
-  # end
+  mutation do
+    field :create_spouse, type: non_null(:family) do
+      arg(:person_id, non_null(:id))
+      arg(:spouse, non_null(:spouse_params))
 
-  # input_object :winner_params do
-  #   field(:last_name, non_null(:string))
-  #   field(:first_name, non_null(:string))
-  #   field(:position, non_null(:integer))
-  # end
+      resolve(&FamilyResolver.create_spouse/2)
+    end
+  end
+
+  input_object :spouse_params do
+    field(:last_name, non_null(:string))
+    field(:first_name, non_null(:string))
+    field(:sex, non_null(:string))
+  end
 end

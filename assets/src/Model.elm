@@ -47,6 +47,7 @@ type alias PersonDialogConfig =
     { person : Person
     , addingSpouseLastName : Maybe String
     , addingSpouseFirstName : Maybe String
+    , saveRequest : WebData ()
     }
 
 
@@ -65,6 +66,7 @@ type Msg
     | NewSpouseNameUpdated PersonField String
     | ConfirmRelationshipButtonPressed
     | GotFamily (RemoteData (Graphql.Http.Error Family) Family)
+    | GotCreateSpouseResponse (RemoteData (Graphql.Http.Error Family) Family)
 
 
 personWidth : Float
@@ -102,4 +104,5 @@ initPersonDialogConfig person =
     { person = person
     , addingSpouseLastName = Nothing
     , addingSpouseFirstName = Nothing
+    , saveRequest = NotAsked
     }

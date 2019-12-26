@@ -14,7 +14,7 @@ defmodule FamilyTree.Models.Relationship do
   @doc false
   def changeset(relationship, attrs) do
     relationship
-    |> cast(attrs, [:children])
+    |> cast(attrs, [:father_id, :mother_id, :children])
     |> validate_required([])
   end
 end

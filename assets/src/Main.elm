@@ -5,6 +5,7 @@ import Browser
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Http
 import Model exposing (Model, Msg(..), Person, PersonField(..), Sex(..))
 import RemoteData as RD exposing (RemoteData(..))
 import Url exposing (Url)
@@ -266,10 +267,22 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just { person, addingSpouseLastName, addingSpouseFirstName } ->
+                Just ({ person, addingSpouseLastName, addingSpouseFirstName } as personDialog) ->
                     case ( addingSpouseLastName, addingSpouseFirstName ) of
                         ( Just lastName, Just firstName ) ->
-                            ( model |> commitSpouse person lastName firstName, Cmd.none )
+                            let
+                                newPersonDialog =
+                                    { personDialog | saveRequest = Loading }
+
+                                spouseSex =
+                                    case person.sex of
+                                        Male ->
+                                            Female
+
+                                        Female ->
+                                            Male
+                            in
+                            ( { model | personDialog = Just newPersonDialog }, Api.createSpouse person.id lastName firstName spouseSex )
 
                         _ ->
                             ( model, Cmd.none )
@@ -277,52 +290,19 @@ update msg model =
         GotFamily resp ->
             ( { model | family = resp }, Cmd.none )
 
+        GotCreateSpouseResponse resp ->
+            case model.personDialog of
+                Just personDialog ->
+                    case resp of
+                        Success family ->
+                            ( { model | family = resp, personDialog = Nothing }, Cmd.none )
 
-commitSpouse : Person -> String -> String -> Model -> Model
-commitSpouse person lastName firstName model =
-    model
+                        _ ->
+                            let
+                                newPersonDialog =
+                                    { personDialog | saveRequest = Failure (Http.BadBody "") }
+                            in
+                            ( { model | personDialog = Just newPersonDialog }, Cmd.none )
 
-
-
--- let
---     relationship =
---         { id = 20, children = [] }
---
---     spouse =
---         { id = 30
---         , firstName = firstName
---         , lastName = lastName
---         , sex =
---             if person.sex == Male then
---                 Female
---
---             else
---                 Male
---         , relationship = Just 20
---         }
---
---     updatedFamily =
---         model.family
---             |> RD.map
---                 (\family ->
---                     let
---                         newTree =
---                             family.tree
---                                 |> List.map
---                                     (\p ->
---                                         if p.id == person.id then
---                                             { p | relationship = Just 20 }
---
---                                         else
---                                             p
---                                     )
---                                 |> (\t -> t ++ [ spouse ])
---                     in
---                     { family | tree = newTree }
---                 )
--- in
--- { model
---     | relationships = model.relationships ++ [ relationship ]
---     , family = updatedFamily
---     , personDialog = Nothing
--- }
+                Nothing ->
+                    ( model, Cmd.none )

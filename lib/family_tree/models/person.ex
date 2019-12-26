@@ -13,7 +13,7 @@ defmodule FamilyTree.Models.Person do
   @doc false
   def changeset(person, attrs) do
     person
-    |> cast(attrs, [:last_name, :first_name, :sex, :relationship_id])
+    |> cast(attrs, [:last_name, :first_name, :sex])
     |> validate_required([:last_name, :first_name, :sex])
   end
 end

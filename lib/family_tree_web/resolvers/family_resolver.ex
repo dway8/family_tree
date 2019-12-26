@@ -1,4 +1,4 @@
-defmodule FamilyTreeWeb.PeopleResolver do
+defmodule FamilyTreeWeb.FamilyResolver do
   require Logger
 
   alias FamilyTree.{People, Relationships}
@@ -38,6 +38,35 @@ defmodule FamilyTreeWeb.PeopleResolver do
 
             family = %{people: people, relationships: relationships}
             {:ok, family}
+        end
+    end
+  end
+
+  def create_spouse(args, _info) do
+    Logger.info("Creating spouse with args #{inspect(args)}")
+
+    case People.create_person(args.spouse) do
+      {:error, _} ->
+        {:error, "Error when creating spouse"}
+
+      {:ok, spouse} ->
+        Logger.info("Created spouse with id #{spouse.id}")
+
+        rel_attrs =
+          if spouse.sex == "Male" do
+            %{father_id: spouse.id, mother_id: args.person_id}
+          else
+            %{mother_id: spouse.id, father_id: args.person_id}
+          end
+          |> Map.put(:children, [])
+
+        case Relationships.create_relationship(rel_attrs) do
+          {:error, _} ->
+            {:error, "Error when creating relationship"}
+
+          {:ok, relationship} ->
+            Logger.info("Created relationship with id #{relationship.id}")
+            get_all({}, {}, {})
         end
     end
   end

@@ -4,7 +4,43 @@
 
 module FamilyTree.InputObject exposing (..)
 
+import FamilyTree.Interface
+import FamilyTree.Object
+import FamilyTree.Scalar
+import FamilyTree.ScalarCodecs
+import FamilyTree.Union
+import Graphql.Internal.Builder.Argument as Argument exposing (Argument)
+import Graphql.Internal.Builder.Object as Object
+import Graphql.Internal.Encode as Encode exposing (Value)
+import Graphql.OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet exposing (SelectionSet)
+import Json.Decode as Decode
 
-placeholder : String
-placeholder =
-    ""
+
+buildSpouseParams : SpouseParamsRequiredFields -> SpouseParams
+buildSpouseParams required =
+    { firstName = required.firstName, lastName = required.lastName, sex = required.sex }
+
+
+type alias SpouseParamsRequiredFields =
+    { firstName : String
+    , lastName : String
+    , sex : String
+    }
+
+
+{-| Type for the SpouseParams input object.
+-}
+type alias SpouseParams =
+    { firstName : String
+    , lastName : String
+    , sex : String
+    }
+
+
+{-| Encode a SpouseParams into a value that can be used as an argument.
+-}
+encodeSpouseParams : SpouseParams -> Value
+encodeSpouseParams input =
+    Encode.maybeObject
+        [ ( "firstName", Encode.string input.firstName |> Just ), ( "lastName", Encode.string input.lastName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]

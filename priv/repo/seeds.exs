@@ -61,10 +61,40 @@ melchior =
   }
   |> Repo.insert!()
 
-o_m_rel =
-  %Relationship{
-    father_id: olivier.id,
-    mother_id: blandine.id,
-    children: [vianney.id, diane.id, mederic.id, melchior.id]
+%Relationship{
+  father_id: olivier.id,
+  mother_id: blandine.id,
+  children: [vianney.id, diane.id, mederic.id, melchior.id]
+}
+|> Repo.insert!()
+
+orlane =
+  %Person{
+    last_name: "Felix",
+    first_name: "Orlane",
+    sex: "Female"
   }
   |> Repo.insert!()
+
+felix =
+  %Person{
+    last_name: "Manière",
+    first_name: "Felix",
+    sex: "Male"
+  }
+  |> Repo.insert!()
+
+timothee =
+  %Person{
+    last_name: "Manière",
+    first_name: "Timothée",
+    sex: "Male"
+  }
+  |> Repo.insert!()
+
+%Relationship{
+  father_id: vianney.id,
+  mother_id: orlane.id,
+  children: [felix.id, timothee.id]
+}
+|> Repo.insert!()
