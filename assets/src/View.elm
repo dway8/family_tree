@@ -410,47 +410,44 @@ personDialogBody tree { person, addingSpouseLastName, addingSpouseFirstName } =
                                 text <| Helpers.getPersonName spouse
                         ]
                 )
-            |> Maybe.withDefault none
-        , case ( addingSpouseLastName, addingSpouseFirstName ) of
-            ( Just lastName, Just firstName ) ->
-                row [ UI.defaultSpacing ]
-                    [ el [] <|
-                        UI.textInput []
-                            { onChange = NewSpouseNameUpdated LastName
-                            , label =
-                                Just <|
-                                    "Nom de famille de "
-                                        ++ (if person.sex == Male then
-                                                "l'épouse"
+            |> Maybe.withDefault
+                (case ( addingSpouseLastName, addingSpouseFirstName ) of
+                    ( Just lastName, Just firstName ) ->
+                        row [ UI.defaultSpacing ]
+                            [ el [] <|
+                                UI.textInput []
+                                    { onChange = NewSpouseNameUpdated LastName
+                                    , label =
+                                        Just <|
+                                            "Nom de famille de "
+                                                ++ (if person.sex == Male then
+                                                        "l'épouse"
 
-                                            else
-                                                "l'époux"
-                                           )
-                            , text = lastName
-                            , placeholder = Nothing
-                            }
-                    , el [] <|
-                        UI.textInput []
-                            { onChange = NewSpouseNameUpdated FirstName
-                            , label =
-                                Just <|
-                                    "Prénom de "
-                                        ++ (if person.sex == Male then
-                                                "l'épouse"
+                                                    else
+                                                        "l'époux"
+                                                   )
+                                    , text = lastName
+                                    , placeholder = Nothing
+                                    }
+                            , el [] <|
+                                UI.textInput []
+                                    { onChange = NewSpouseNameUpdated FirstName
+                                    , label =
+                                        Just <|
+                                            "Prénom de "
+                                                ++ (if person.sex == Male then
+                                                        "l'épouse"
 
-                                            else
-                                                "l'époux"
-                                           )
-                            , text = firstName
-                            , placeholder = Nothing
-                            }
-                    ]
+                                                    else
+                                                        "l'époux"
+                                                   )
+                                    , text = firstName
+                                    , placeholder = Nothing
+                                    }
+                            ]
 
-            _ ->
-                person.relationship
-                    |> Maybe.map (always none)
-                    |> Maybe.withDefault
-                        ((text <|
+                    _ ->
+                        (text <|
                             "Ajouter "
                                 ++ (if person.sex == Male then
                                         "une épouse"
@@ -458,11 +455,11 @@ personDialogBody tree { person, addingSpouseLastName, addingSpouseFirstName } =
                                     else
                                         "un époux"
                                    )
-                         )
+                        )
                             |> UI.defaultButton (Just AddSpouseButtonPressed)
                             |> Button.withBackgroundColor UI.Color.green
                             |> Button.viewButton
-                        )
+                )
         ]
 
 
