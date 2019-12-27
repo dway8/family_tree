@@ -306,3 +306,35 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        AddChildButtonPressed ->
+            let
+                newPersonDialog =
+                    model.personDialog
+                        |> Maybe.map
+                            (\pd ->
+                                { pd
+                                    | addingChildFirstName = Just ""
+                                    , addingChildSex = Just Male
+                                }
+                            )
+            in
+            ( { model | personDialog = newPersonDialog }, Cmd.none )
+
+        NewChildFirstNameUpdated val ->
+            let
+                newPersonDialog =
+                    model.personDialog
+                        |> Maybe.map
+                            (\pd -> { pd | addingChildFirstName = Just val })
+            in
+            ( { model | personDialog = newPersonDialog }, Cmd.none )
+
+        SelectedChildSex str ->
+            let
+                newPersonDialog =
+                    model.personDialog
+                        |> Maybe.map
+                            (\pd -> { pd | addingChildSex = Just (Model.sexFromString str) })
+            in
+            ( { model | personDialog = newPersonDialog }, Cmd.none )

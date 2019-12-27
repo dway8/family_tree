@@ -34,7 +34,7 @@ createSpouse personId lastName firstName sex =
         , spouse =
             { firstName = firstName
             , lastName = lastName
-            , sex = sexToString sex
+            , sex = Model.sexToString sex
             }
         }
         familySelection
@@ -56,7 +56,7 @@ personSelection =
         |> with Person.id
         |> with Person.firstName
         |> with Person.lastName
-        |> with (SelectionSet.map sexFromString Person.sex)
+        |> with (SelectionSet.map Model.sexFromString Person.sex)
         |> with Person.relationshipId
 
 
@@ -65,26 +65,3 @@ relationshipSelection =
     SelectionSet.succeed Relationship
         |> with Relationship.id
         |> with Relationship.children
-
-
-sexFromString : String -> Sex
-sexFromString str =
-    case str of
-        "Male" ->
-            Male
-
-        "Female" ->
-            Female
-
-        _ ->
-            Male
-
-
-sexToString : Sex -> String
-sexToString sex =
-    case sex of
-        Male ->
-            "Male"
-
-        Female ->
-            "Female"

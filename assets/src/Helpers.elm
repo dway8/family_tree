@@ -3,7 +3,7 @@ module Helpers exposing (..)
 import Dict exposing (Dict)
 import FamilyTree.Scalar exposing (Id(..))
 import List.Extra as LE
-import Model exposing (Bounds, Family, Msg, Person)
+import Model exposing (Bounds, Family, Msg, Person, Relationship)
 import TypedSvg.Core as SC
 
 
@@ -173,10 +173,10 @@ getPersonDescendants level ({ tree, relationships } as family) currentPerson cur
                 |> Maybe.withDefault currentDict
 
 
-getSpouse : List Person -> Person -> Id -> Maybe Person
-getSpouse tree person relId =
+getSpouse : List Person -> Person -> Relationship -> Maybe Person
+getSpouse tree person rel =
     tree
-        |> List.filter (\p -> p.relationship == Just relId && p.firstName /= person.firstName && p.lastName /= person.lastName)
+        |> List.filter (\p -> p.relationship == Just rel.id && p.firstName /= person.firstName && p.lastName /= person.lastName)
         |> List.head
 
 

@@ -13,6 +13,11 @@ lightestGrey =
     rgb255 244 244 244
 
 
+grey : Color
+grey =
+    rgb255 178 178 178
+
+
 darkGrey : Color
 darkGrey =
     rgb255 136 136 136

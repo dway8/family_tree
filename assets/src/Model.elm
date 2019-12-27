@@ -47,6 +47,8 @@ type alias PersonDialogConfig =
     { person : Person
     , addingSpouseLastName : Maybe String
     , addingSpouseFirstName : Maybe String
+    , addingChildFirstName : Maybe String
+    , addingChildSex : Maybe Sex
     , saveRequest : WebData ()
     }
 
@@ -67,6 +69,9 @@ type Msg
     | ConfirmRelationshipButtonPressed
     | GotFamily (RemoteData (Graphql.Http.Error Family) Family)
     | GotCreateSpouseResponse (RemoteData (Graphql.Http.Error Family) Family)
+    | AddChildButtonPressed
+    | NewChildFirstNameUpdated String
+    | SelectedChildSex String
 
 
 personWidth : Float
@@ -104,5 +109,30 @@ initPersonDialogConfig person =
     { person = person
     , addingSpouseLastName = Nothing
     , addingSpouseFirstName = Nothing
+    , addingChildFirstName = Nothing
+    , addingChildSex = Nothing
     , saveRequest = NotAsked
     }
+
+
+sexFromString : String -> Sex
+sexFromString str =
+    case str of
+        "Male" ->
+            Male
+
+        "Female" ->
+            Female
+
+        _ ->
+            Male
+
+
+sexToString : Sex -> String
+sexToString sex =
+    case sex of
+        Male ->
+            "Male"
+
+        Female ->
+            "Female"

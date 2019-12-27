@@ -40,7 +40,7 @@ view model =
              ]
                 ++ (case ( model.family, model.personDialog ) of
                         ( Success family, Just personDialogConfig ) ->
-                            [ inFront <| UI.viewDialog <| viewPersonDialog family.tree personDialogConfig ]
+                            [ inFront <| UI.viewDialog <| viewPersonDialog family personDialogConfig ]
 
                         _ ->
                             []
@@ -164,7 +164,7 @@ viewPersonWithDescendants level originX originY ({ tree, relationships } as fami
                             SC.text ""
 
                         Just rel ->
-                            case Helpers.getSpouse tree person relId of
+                            case Helpers.getSpouse tree person rel of
                                 Nothing ->
                                     SC.text ""
 
@@ -376,39 +376,88 @@ viewPersonBox fromFamily x y person =
         ]
 
 
-viewPersonDialog : List Person -> PersonDialogConfig -> UI.DialogConfig Msg
-viewPersonDialog tree config =
+viewPersonDialog : Family -> PersonDialogConfig -> UI.DialogConfig Msg
+viewPersonDialog family config =
     { header = Nothing
     , size = UI.midModal
-    , body = personDialogBody tree config
+    , body = personDialogBody family config
     , closable = Just PersonDialogClosed
     , footer = config.addingSpouseLastName |> Maybe.map (always <| personDialogFooter config)
     }
 
 
-personDialogBody : List Person -> PersonDialogConfig -> Element Msg
-personDialogBody tree { person, addingSpouseLastName, addingSpouseFirstName } =
+personDialogBody : Family -> PersonDialogConfig -> Element Msg
+personDialogBody { tree, relationships } { person, addingSpouseLastName, addingSpouseFirstName, addingChildFirstName, addingChildSex } =
     column [ width fill, Font.size 16, UI.defaultSpacing ]
         [ el [ Font.bold, Font.size 20 ] <| text <| Helpers.getPersonName person
         , person.relationship
             |> Maybe.map
                 (\relId ->
-                    row [ UI.smallSpacing ]
-                        [ el [ Font.bold ] <|
-                            text <|
-                                case person.sex of
-                                    Male ->
-                                        "Épouse"
+                    let
+                        maybeRelationship =
+                            relationships
+                                |> List.filter (.id >> (==) relId)
+                                |> List.head
+                    in
+                    case maybeRelationship of
+                        Nothing ->
+                            none
 
-                                    Female ->
-                                        "Époux"
-                        , case Helpers.getSpouse tree person relId of
-                            Nothing ->
-                                text "Erreur"
+                        Just rel ->
+                            column [ UI.largeSpacing ]
+                                [ row [ UI.smallSpacing ]
+                                    [ el [ Font.bold ] <|
+                                        text <|
+                                            case person.sex of
+                                                Male ->
+                                                    "Épouse"
 
-                            Just spouse ->
-                                text <| Helpers.getPersonName spouse
-                        ]
+                                                Female ->
+                                                    "Époux"
+                                    , case Helpers.getSpouse tree person rel of
+                                        Nothing ->
+                                            text "Erreur"
+
+                                        Just spouse ->
+                                            text <| Helpers.getPersonName spouse
+                                    ]
+                                , column [ UI.defaultSpacing ]
+                                    [ el [ Font.bold ] <| text "Enfants"
+                                    , column []
+                                        (rel.children
+                                            |> List.map
+                                                (\childId ->
+                                                    Helpers.getPersonFromId tree childId
+                                                        |> Maybe.map (\child -> text <| Helpers.getPersonName child)
+                                                        |> Maybe.withDefault none
+                                                )
+                                        )
+                                    , case ( addingChildFirstName, addingChildSex ) of
+                                        ( Just firstName, Just sex ) ->
+                                            row [ UI.defaultSpacing ]
+                                                [ el [] <|
+                                                    UI.textInput []
+                                                        { onChange = NewChildFirstNameUpdated
+                                                        , label = Just <| "Prénom de l'enfant"
+                                                        , text = firstName
+                                                        , placeholder = Nothing
+                                                        }
+                                                , UI.radioInput []
+                                                    { onChange = SelectedChildSex
+                                                    , label = Nothing
+                                                    , selected = sex |> Model.sexToString |> Just
+                                                    , options = [ ( Model.sexToString Male, "Garçon" ), ( Model.sexToString Female, "Fille" ) ]
+                                                    }
+                                                ]
+
+                                        _ ->
+                                            "Ajouter un enfant"
+                                                |> text
+                                                |> UI.defaultButton (Just AddChildButtonPressed)
+                                                |> Button.withBackgroundColor UI.Color.green
+                                                |> Button.viewButton
+                                    ]
+                                ]
                 )
             |> Maybe.withDefault
                 (case ( addingSpouseLastName, addingSpouseFirstName ) of

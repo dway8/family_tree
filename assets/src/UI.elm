@@ -21,6 +21,14 @@ type alias TextInputConfig msg =
     }
 
 
+type alias RadioInputConfig msg =
+    { onChange : String -> msg
+    , label : Maybe String
+    , selected : Maybe String
+    , options : List ( String, String )
+    }
+
+
 textInput : List (Attribute msg) -> TextInputConfig msg -> Element msg
 textInput attrs config =
     Input.text
@@ -33,6 +41,89 @@ textInput attrs config =
         , text = config.text
         , placeholder = Maybe.map (Input.placeholder [ moveLeft 1, moveUp 1 ]) <| config.placeholder
         }
+
+
+radioInput : List (Attribute msg) -> RadioInputConfig msg -> Element msg
+radioInput attrs config =
+    Input.radio
+        ([ paddingXY 15 0
+         , spacing 15
+         , width fill
+         ]
+            ++ attrs
+        )
+        { onChange = config.onChange
+        , selected = config.selected
+        , label =
+            config.label
+                |> Maybe.map (\l -> Input.labelAbove [ Font.color UI.Color.darkerGrey ] <| text l)
+                |> Maybe.withDefault (Input.labelHidden "")
+        , options = config.options |> List.map viewRadioOption
+        }
+
+
+viewRadioOption : ( String, String ) -> Input.Option String msg
+viewRadioOption ( value, label ) =
+    Input.optionWith value
+        (\state ->
+            column [ spacing 10, width fill ]
+                [ row
+                    ([ width fill, spacing 12 ]
+                        ++ (if state == Input.Idle then
+                                []
+
+                            else
+                                [ Font.bold ]
+                           )
+                    )
+                    [ row [ spacing 5, width fill ]
+                        [ radioCircle (state == Input.Selected)
+                        , paragraph [ width fill ] [ text label ]
+                        ]
+                    ]
+                ]
+        )
+
+
+radioCircle : Bool -> Element msg
+radioCircle isSelected =
+    el
+        [ inFront
+            (el
+                [ width (px 10)
+                , height (px 10)
+                , centerX
+                , centerY
+                , Background.color
+                    (case isSelected of
+                        True ->
+                            UI.Color.green
+
+                        False ->
+                            UI.Color.white
+                    )
+                , Border.width 1
+                , Border.color UI.Color.white
+                , Border.rounded 7
+                ]
+                none
+            )
+        ]
+        (el
+            [ width (px 14)
+            , height (px 14)
+            , Border.rounded 7
+            , Border.width 2
+            , Border.color <|
+                case isSelected of
+                    True ->
+                        UI.Color.green
+
+                    False ->
+                        UI.Color.grey
+            ]
+            none
+        )
 
 
 cropAndAddEllipsis : Int -> String -> String
