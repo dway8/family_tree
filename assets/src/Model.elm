@@ -72,6 +72,8 @@ type Msg
     | AddChildButtonPressed
     | NewChildFirstNameUpdated String
     | SelectedChildSex String
+    | ConfirmChildButtonPressed
+    | GotCreateChildResponse (RemoteData (Graphql.Http.Error Family) Family)
 
 
 personWidth : Float

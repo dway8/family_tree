@@ -19,6 +19,17 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
+type alias CreateChildRequiredArguments =
+    { child : FamilyTree.InputObject.ChildParams
+    , relationshipId : FamilyTree.ScalarCodecs.Id
+    }
+
+
+createChild : CreateChildRequiredArguments -> SelectionSet decodesTo FamilyTree.Object.Family -> SelectionSet decodesTo RootMutation
+createChild requiredArgs object_ =
+    Object.selectionForCompositeField "createChild" [ Argument.required "child" requiredArgs.child FamilyTree.InputObject.encodeChildParams, Argument.required "relationshipId" requiredArgs.relationshipId (FamilyTree.ScalarCodecs.codecs |> FamilyTree.Scalar.unwrapEncoder .codecId) ] object_ identity
+
+
 type alias CreateSpouseRequiredArguments =
     { personId : FamilyTree.ScalarCodecs.Id
     , spouse : FamilyTree.InputObject.SpouseParams

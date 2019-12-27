@@ -41,10 +41,22 @@ defmodule FamilyTreeWeb.Schema do
 
       resolve(&FamilyResolver.create_spouse/2)
     end
+
+    field :create_child, type: non_null(:family) do
+      arg(:relationship_id, non_null(:id))
+      arg(:child, non_null(:child_params))
+
+      resolve(&FamilyResolver.create_child/2)
+    end
   end
 
   input_object :spouse_params do
     field(:last_name, non_null(:string))
+    field(:first_name, non_null(:string))
+    field(:sex, non_null(:string))
+  end
+
+  input_object :child_params do
     field(:first_name, non_null(:string))
     field(:sex, non_null(:string))
   end

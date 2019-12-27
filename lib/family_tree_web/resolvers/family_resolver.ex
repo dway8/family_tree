@@ -70,4 +70,28 @@ defmodule FamilyTreeWeb.FamilyResolver do
         end
     end
   end
+
+  def create_child(args, _info) do
+    Logger.info("Creating child with args #{inspect(args)}")
+
+    relationship = Relationships.get_relationship(args.relationship_id)
+
+    case People.create_child(relationship, args.child) do
+      {:error, _} ->
+        {:error, "Error when creating child"}
+
+      {:ok, child} ->
+        Logger.info("Created child with id #{child.id}")
+
+        rel_attrs = %{children: Enum.concat(relationship.children, [child.id])}
+
+        case Relationships.update_relationship(relationship, rel_attrs) do
+          {:error, _} ->
+            {:error, "Error when updating relationship #{relationship.id}"}
+
+          {:ok, relationship} ->
+            get_all({}, {}, {})
+        end
+    end
+  end
 end

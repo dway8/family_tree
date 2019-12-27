@@ -382,7 +382,18 @@ viewPersonDialog family config =
     , size = UI.midModal
     , body = personDialogBody family config
     , closable = Just PersonDialogClosed
-    , footer = config.addingSpouseLastName |> Maybe.map (always <| personDialogFooter config)
+    , footer =
+        case config.addingSpouseLastName of
+            Just _ ->
+                Just <| personDialogFooter config ConfirmRelationshipButtonPressed
+
+            Nothing ->
+                case config.addingChildFirstName of
+                    Just _ ->
+                        Just <| personDialogFooter config ConfirmChildButtonPressed
+
+                    Nothing ->
+                        Nothing
     }
 
 
@@ -512,6 +523,6 @@ personDialogBody { tree, relationships } { person, addingSpouseLastName, addingS
         ]
 
 
-personDialogFooter : PersonDialogConfig -> Element Msg
-personDialogFooter config =
-    UI.defaultDialogFooter PersonDialogClosed ConfirmRelationshipButtonPressed False False
+personDialogFooter : PersonDialogConfig -> Msg -> Element Msg
+personDialogFooter config confirmMsg =
+    UI.defaultDialogFooter PersonDialogClosed confirmMsg False False

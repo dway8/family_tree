@@ -17,6 +17,33 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+buildChildParams : ChildParamsRequiredFields -> ChildParams
+buildChildParams required =
+    { firstName = required.firstName, sex = required.sex }
+
+
+type alias ChildParamsRequiredFields =
+    { firstName : String
+    , sex : String
+    }
+
+
+{-| Type for the ChildParams input object.
+-}
+type alias ChildParams =
+    { firstName : String
+    , sex : String
+    }
+
+
+{-| Encode a ChildParams into a value that can be used as an argument.
+-}
+encodeChildParams : ChildParams -> Value
+encodeChildParams input =
+    Encode.maybeObject
+        [ ( "firstName", Encode.string input.firstName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]
+
+
 buildSpouseParams : SpouseParamsRequiredFields -> SpouseParams
 buildSpouseParams required =
     { firstName = required.firstName, lastName = required.lastName, sex = required.sex }

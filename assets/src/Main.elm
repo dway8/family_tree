@@ -338,3 +338,37 @@ update msg model =
                             (\pd -> { pd | addingChildSex = Just (Model.sexFromString str) })
             in
             ( { model | personDialog = newPersonDialog }, Cmd.none )
+
+        ConfirmChildButtonPressed ->
+            case model.personDialog of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just ({ person, addingChildFirstName, addingChildSex } as personDialog) ->
+                    case ( person.relationship, addingChildFirstName, addingChildSex ) of
+                        ( Just relId, Just firstName, Just sex ) ->
+                            let
+                                newPersonDialog =
+                                    { personDialog | saveRequest = Loading }
+                            in
+                            ( { model | personDialog = Just newPersonDialog }, Api.createChild relId firstName sex )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+        GotCreateChildResponse resp ->
+            case model.personDialog of
+                Just personDialog ->
+                    case resp of
+                        Success family ->
+                            ( { model | family = resp, personDialog = Nothing }, Cmd.none )
+
+                        _ ->
+                            let
+                                newPersonDialog =
+                                    { personDialog | saveRequest = Failure (Http.BadBody "") }
+                            in
+                            ( { model | personDialog = Just newPersonDialog }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )

@@ -1,4 +1,4 @@
-module Api exposing (createSpouse, getFamily)
+module Api exposing (createChild, createSpouse, getFamily)
 
 import FamilyTree.Mutation as Mutation
 import FamilyTree.Object
@@ -41,6 +41,21 @@ createSpouse personId lastName firstName sex =
         |> Graphql.Http.mutationRequest endpoint
         |> Graphql.Http.withCredentials
         |> Graphql.Http.send (RemoteData.fromResult >> GotCreateSpouseResponse)
+
+
+createChild : Id -> String -> Sex -> Cmd Msg
+createChild relationshipId firstName sex =
+    Mutation.createChild
+        { relationshipId = relationshipId
+        , child =
+            { firstName = firstName
+            , sex = Model.sexToString sex
+            }
+        }
+        familySelection
+        |> Graphql.Http.mutationRequest endpoint
+        |> Graphql.Http.withCredentials
+        |> Graphql.Http.send (RemoteData.fromResult >> GotCreateChildResponse)
 
 
 familySelection : SelectionSet Family FamilyTree.Object.Family

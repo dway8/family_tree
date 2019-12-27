@@ -15,4 +15,22 @@ defmodule FamilyTree.Relationships do
     |> Relationship.changeset(attrs)
     |> Repo.insert()
   end
+
+  @doc """
+  Gets a single relationship.
+  """
+  def get_relationship(id) do
+    Logger.info("Getting relationship with id #{id}")
+
+    Repo.get(Relationship, id)
+  end
+
+  @doc """
+  Updates a relationship.
+  """
+  def update_relationship(%Relationship{} = relationship, attrs) do
+    relationship
+    |> Relationship.changeset(attrs)
+    |> Repo.update()
+  end
 end
