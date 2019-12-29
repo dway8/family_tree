@@ -19,6 +19,16 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+birthDate : SelectionSet decodesTo FamilyTree.Object.FullDate -> SelectionSet decodesTo FamilyTree.Object.Person
+birthDate object_ =
+    Object.selectionForCompositeField "birthDate" [] object_ identity
+
+
+deathDate : SelectionSet decodesTo FamilyTree.Object.FullDate -> SelectionSet decodesTo FamilyTree.Object.Person
+deathDate object_ =
+    Object.selectionForCompositeField "deathDate" [] object_ identity
+
+
 firstName : SelectionSet String FamilyTree.Object.Person
 firstName =
     Object.selectionForField "String" "firstName" [] Decode.string

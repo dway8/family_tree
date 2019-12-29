@@ -10,6 +10,8 @@ defmodule FamilyTreeWeb.Schema do
     field(:first_name, non_null(:string))
     field(:sex, non_null(:string))
     field(:relationship_id, :id)
+    field(:birth_date, non_null(:full_date))
+    field(:death_date, non_null(:full_date))
   end
 
   object :relationship do
@@ -20,6 +22,12 @@ defmodule FamilyTreeWeb.Schema do
   object :family do
     field(:people, non_null(list_of(non_null(:person))))
     field(:relationships, non_null(list_of(non_null(:relationship))))
+  end
+
+  object :full_date do
+    field(:day, :integer)
+    field(:month, :integer)
+    field(:year, :integer)
   end
 
   query do
@@ -54,10 +62,20 @@ defmodule FamilyTreeWeb.Schema do
     field(:last_name, non_null(:string))
     field(:first_name, non_null(:string))
     field(:sex, non_null(:string))
+    field(:birth_date, non_null(:full_date_params))
+    field(:death_date, non_null(:full_date_params))
   end
 
   input_object :child_params do
     field(:first_name, non_null(:string))
     field(:sex, non_null(:string))
+    field(:birth_date, non_null(:full_date_params))
+    field(:death_date, non_null(:full_date_params))
+  end
+
+  input_object :full_date_params do
+    field(:day, :integer)
+    field(:month, :integer)
+    field(:year, :integer)
   end
 end

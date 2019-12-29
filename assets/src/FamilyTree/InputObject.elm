@@ -19,11 +19,13 @@ import Json.Decode as Decode
 
 buildChildParams : ChildParamsRequiredFields -> ChildParams
 buildChildParams required =
-    { firstName = required.firstName, sex = required.sex }
+    { birthDate = required.birthDate, deathDate = required.deathDate, firstName = required.firstName, sex = required.sex }
 
 
 type alias ChildParamsRequiredFields =
-    { firstName : String
+    { birthDate : FullDateParams
+    , deathDate : FullDateParams
+    , firstName : String
     , sex : String
     }
 
@@ -31,7 +33,9 @@ type alias ChildParamsRequiredFields =
 {-| Type for the ChildParams input object.
 -}
 type alias ChildParams =
-    { firstName : String
+    { birthDate : FullDateParams
+    , deathDate : FullDateParams
+    , firstName : String
     , sex : String
     }
 
@@ -41,16 +45,52 @@ type alias ChildParams =
 encodeChildParams : ChildParams -> Value
 encodeChildParams input =
     Encode.maybeObject
-        [ ( "firstName", Encode.string input.firstName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]
+        [ ( "birthDate", encodeFullDateParams input.birthDate |> Just ), ( "deathDate", encodeFullDateParams input.deathDate |> Just ), ( "firstName", Encode.string input.firstName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]
+
+
+buildFullDateParams : (FullDateParamsOptionalFields -> FullDateParamsOptionalFields) -> FullDateParams
+buildFullDateParams fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { day = Absent, month = Absent, year = Absent }
+    in
+    { day = optionals.day, month = optionals.month, year = optionals.year }
+
+
+type alias FullDateParamsOptionalFields =
+    { day : OptionalArgument Int
+    , month : OptionalArgument Int
+    , year : OptionalArgument Int
+    }
+
+
+{-| Type for the FullDateParams input object.
+-}
+type alias FullDateParams =
+    { day : OptionalArgument Int
+    , month : OptionalArgument Int
+    , year : OptionalArgument Int
+    }
+
+
+{-| Encode a FullDateParams into a value that can be used as an argument.
+-}
+encodeFullDateParams : FullDateParams -> Value
+encodeFullDateParams input =
+    Encode.maybeObject
+        [ ( "day", Encode.int |> Encode.optional input.day ), ( "month", Encode.int |> Encode.optional input.month ), ( "year", Encode.int |> Encode.optional input.year ) ]
 
 
 buildSpouseParams : SpouseParamsRequiredFields -> SpouseParams
 buildSpouseParams required =
-    { firstName = required.firstName, lastName = required.lastName, sex = required.sex }
+    { birthDate = required.birthDate, deathDate = required.deathDate, firstName = required.firstName, lastName = required.lastName, sex = required.sex }
 
 
 type alias SpouseParamsRequiredFields =
-    { firstName : String
+    { birthDate : FullDateParams
+    , deathDate : FullDateParams
+    , firstName : String
     , lastName : String
     , sex : String
     }
@@ -59,7 +99,9 @@ type alias SpouseParamsRequiredFields =
 {-| Type for the SpouseParams input object.
 -}
 type alias SpouseParams =
-    { firstName : String
+    { birthDate : FullDateParams
+    , deathDate : FullDateParams
+    , firstName : String
     , lastName : String
     , sex : String
     }
@@ -70,4 +112,4 @@ type alias SpouseParams =
 encodeSpouseParams : SpouseParams -> Value
 encodeSpouseParams input =
     Encode.maybeObject
-        [ ( "firstName", Encode.string input.firstName |> Just ), ( "lastName", Encode.string input.lastName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]
+        [ ( "birthDate", encodeFullDateParams input.birthDate |> Just ), ( "deathDate", encodeFullDateParams input.deathDate |> Just ), ( "firstName", Encode.string input.firstName |> Just ), ( "lastName", Encode.string input.lastName |> Just ), ( "sex", Encode.string input.sex |> Just ) ]

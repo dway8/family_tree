@@ -6,13 +6,14 @@ import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Http
-import Model exposing (Model, Msg(..), Person, PersonField(..), Sex(..))
+import Model exposing (Flags, Model, Msg(..), Person, PersonField(..), Sex(..))
 import RemoteData as RD exposing (RemoteData(..))
+import Time
 import Url exposing (Url)
 import View
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init
@@ -29,12 +30,13 @@ subscriptions model =
     Sub.none
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     ( { family = Loading
       , query = Nothing
       , lastName = Nothing
       , personDialog = Nothing
+      , now = flags.now |> Time.millisToPosix
       }
     , Api.getFamily
     )
@@ -238,9 +240,20 @@ update msg model =
                     model.personDialog
                         |> Maybe.map
                             (\pd ->
+                                let
+                                    spouseSex =
+                                        case pd.person.sex of
+                                            Male ->
+                                                Female
+
+                                            Female ->
+                                                Male
+                                in
                                 { pd
-                                    | addingSpouseLastName = Just ""
-                                    , addingSpouseFirstName = Just ""
+                                    | addingSpouse =
+                                        Model.initPerson
+                                            |> (\p -> { p | sex = spouseSex })
+                                            |> Just
                                 }
                             )
             in
@@ -252,12 +265,19 @@ update msg model =
                     model.personDialog
                         |> Maybe.map
                             (\pd ->
-                                case field of
-                                    LastName ->
-                                        { pd | addingSpouseLastName = Just val }
+                                { pd
+                                    | addingSpouse =
+                                        pd.addingSpouse
+                                            |> Maybe.map
+                                                (\spouse ->
+                                                    case field of
+                                                        LastName ->
+                                                            { spouse | lastName = val }
 
-                                    FirstName ->
-                                        { pd | addingSpouseFirstName = Just val }
+                                                        FirstName ->
+                                                            { spouse | firstName = val }
+                                                )
+                                }
                             )
             in
             ( { model | personDialog = newPersonDialog }, Cmd.none )
@@ -267,22 +287,14 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just ({ person, addingSpouseLastName, addingSpouseFirstName } as personDialog) ->
-                    case ( addingSpouseLastName, addingSpouseFirstName ) of
-                        ( Just lastName, Just firstName ) ->
+                Just ({ person, addingSpouse } as personDialog) ->
+                    case addingSpouse of
+                        Just spouse ->
                             let
                                 newPersonDialog =
                                     { personDialog | saveRequest = Loading }
-
-                                spouseSex =
-                                    case person.sex of
-                                        Male ->
-                                            Female
-
-                                        Female ->
-                                            Male
                             in
-                            ( { model | personDialog = Just newPersonDialog }, Api.createSpouse person.id lastName firstName spouseSex )
+                            ( { model | personDialog = Just newPersonDialog }, Api.createSpouse person.id spouse )
 
                         _ ->
                             ( model, Cmd.none )
@@ -313,10 +325,7 @@ update msg model =
                     model.personDialog
                         |> Maybe.map
                             (\pd ->
-                                { pd
-                                    | addingChildFirstName = Just ""
-                                    , addingChildSex = Just Male
-                                }
+                                { pd | addingChild = Just Model.initPerson }
                             )
             in
             ( { model | personDialog = newPersonDialog }, Cmd.none )
@@ -326,7 +335,13 @@ update msg model =
                 newPersonDialog =
                     model.personDialog
                         |> Maybe.map
-                            (\pd -> { pd | addingChildFirstName = Just val })
+                            (\pd ->
+                                { pd
+                                    | addingChild =
+                                        pd.addingChild
+                                            |> Maybe.map (\child -> { child | firstName = val })
+                                }
+                            )
             in
             ( { model | personDialog = newPersonDialog }, Cmd.none )
 
@@ -335,7 +350,13 @@ update msg model =
                 newPersonDialog =
                     model.personDialog
                         |> Maybe.map
-                            (\pd -> { pd | addingChildSex = Just (Model.sexFromString str) })
+                            (\pd ->
+                                { pd
+                                    | addingChild =
+                                        pd.addingChild
+                                            |> Maybe.map (\child -> { child | sex = Model.sexFromString str })
+                                }
+                            )
             in
             ( { model | personDialog = newPersonDialog }, Cmd.none )
 
@@ -344,14 +365,14 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just ({ person, addingChildFirstName, addingChildSex } as personDialog) ->
-                    case ( person.relationship, addingChildFirstName, addingChildSex ) of
-                        ( Just relId, Just firstName, Just sex ) ->
+                Just ({ person, addingChild } as personDialog) ->
+                    case ( person.relationship, addingChild ) of
+                        ( Just relId, Just child ) ->
                             let
                                 newPersonDialog =
                                     { personDialog | saveRequest = Loading }
                             in
-                            ( { model | personDialog = Just newPersonDialog }, Api.createChild relId firstName sex )
+                            ( { model | personDialog = Just newPersonDialog }, Api.createChild relId child )
 
                         _ ->
                             ( model, Cmd.none )

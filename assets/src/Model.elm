@@ -3,6 +3,7 @@ module Model exposing (..)
 import FamilyTree.Scalar exposing (Id(..))
 import Graphql.Http
 import RemoteData exposing (RemoteData(..), WebData)
+import Time exposing (Month, Posix)
 
 
 type alias Model =
@@ -10,7 +11,12 @@ type alias Model =
     , query : Maybe String
     , lastName : Maybe String
     , personDialog : Maybe PersonDialogConfig
+    , now : Posix
     }
+
+
+type alias Flags =
+    { now : Int }
 
 
 type alias Family =
@@ -25,6 +31,15 @@ type alias Person =
     , lastName : String
     , sex : Sex
     , relationship : Maybe Id
+    , birthDate : FullDate
+    , deathDate : FullDate
+    }
+
+
+type alias FullDate =
+    { day : Maybe Int
+    , month : Maybe Month
+    , year : Maybe Int
     }
 
 
@@ -45,10 +60,8 @@ type alias Bounds =
 
 type alias PersonDialogConfig =
     { person : Person
-    , addingSpouseLastName : Maybe String
-    , addingSpouseFirstName : Maybe String
-    , addingChildFirstName : Maybe String
-    , addingChildSex : Maybe Sex
+    , addingSpouse : Maybe Person
+    , addingChild : Maybe Person
     , saveRequest : WebData ()
     }
 
@@ -109,10 +122,8 @@ parentsWidth =
 initPersonDialogConfig : Person -> PersonDialogConfig
 initPersonDialogConfig person =
     { person = person
-    , addingSpouseLastName = Nothing
-    , addingSpouseFirstName = Nothing
-    , addingChildFirstName = Nothing
-    , addingChildSex = Nothing
+    , addingSpouse = Nothing
+    , addingChild = Nothing
     , saveRequest = NotAsked
     }
 
@@ -138,3 +149,20 @@ sexToString sex =
 
         Female ->
             "Female"
+
+
+initPerson : Person
+initPerson =
+    { id = Id "NEW"
+    , firstName = ""
+    , lastName = ""
+    , sex = Male
+    , relationship = Nothing
+    , birthDate = initFullDate
+    , deathDate = initFullDate
+    }
+
+
+initFullDate : FullDate
+initFullDate =
+    { day = Nothing, month = Nothing, year = Nothing }

@@ -1,16 +1,20 @@
 module Api exposing (createChild, createSpouse, getFamily)
 
+import FamilyTree.InputObject
 import FamilyTree.Mutation as Mutation
 import FamilyTree.Object
 import FamilyTree.Object.Family as Family
+import FamilyTree.Object.FullDate as FullDate
 import FamilyTree.Object.Person as Person
 import FamilyTree.Object.Relationship as Relationship
 import FamilyTree.Query as Query
 import FamilyTree.Scalar exposing (Id(..))
 import Graphql.Http
+import Graphql.OptionalArgument as GOA
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
-import Model exposing (Family, Msg(..), Person, Relationship, Sex(..))
+import Model exposing (Family, FullDate, Msg(..), Person, Relationship, Sex(..))
 import RemoteData
+import Time exposing (Month(..))
 
 
 endpoint : String
@@ -27,14 +31,16 @@ getFamily =
         |> Graphql.Http.send (RemoteData.fromResult >> GotFamily)
 
 
-createSpouse : Id -> String -> String -> Sex -> Cmd Msg
-createSpouse personId lastName firstName sex =
+createSpouse : Id -> Person -> Cmd Msg
+createSpouse personId spouse =
     Mutation.createSpouse
         { personId = personId
         , spouse =
-            { firstName = firstName
-            , lastName = lastName
-            , sex = Model.sexToString sex
+            { firstName = spouse.firstName
+            , lastName = spouse.lastName
+            , sex = Model.sexToString spouse.sex
+            , birthDate = fullDateToParams spouse.birthDate
+            , deathDate = fullDateToParams spouse.deathDate
             }
         }
         familySelection
@@ -43,13 +49,23 @@ createSpouse personId lastName firstName sex =
         |> Graphql.Http.send (RemoteData.fromResult >> GotCreateSpouseResponse)
 
 
-createChild : Id -> String -> Sex -> Cmd Msg
-createChild relationshipId firstName sex =
+fullDateToParams : FullDate -> FamilyTree.InputObject.FullDateParams
+fullDateToParams { day, month, year } =
+    { day = day |> GOA.fromMaybe
+    , month = month |> Maybe.map monthToInt |> GOA.fromMaybe
+    , year = year |> GOA.fromMaybe
+    }
+
+
+createChild : Id -> Person -> Cmd Msg
+createChild relationshipId child =
     Mutation.createChild
         { relationshipId = relationshipId
         , child =
-            { firstName = firstName
-            , sex = Model.sexToString sex
+            { firstName = child.firstName
+            , sex = Model.sexToString child.sex
+            , birthDate = fullDateToParams child.birthDate
+            , deathDate = fullDateToParams child.deathDate
             }
         }
         familySelection
@@ -73,6 +89,102 @@ personSelection =
         |> with Person.lastName
         |> with (SelectionSet.map Model.sexFromString Person.sex)
         |> with Person.relationshipId
+        |> with (Person.birthDate fullDateSelection)
+        |> with (Person.deathDate fullDateSelection)
+
+
+fullDateSelection : SelectionSet FullDate FamilyTree.Object.FullDate
+fullDateSelection =
+    SelectionSet.succeed FullDate
+        |> with FullDate.day
+        |> with (SelectionSet.map monthFromInt FullDate.month)
+        |> with FullDate.year
+
+
+monthFromInt : Maybe Int -> Maybe Month
+monthFromInt =
+    Maybe.andThen
+        (\int ->
+            case int of
+                1 ->
+                    Just Jan
+
+                2 ->
+                    Just Feb
+
+                3 ->
+                    Just Mar
+
+                4 ->
+                    Just Apr
+
+                5 ->
+                    Just May
+
+                6 ->
+                    Just Jun
+
+                7 ->
+                    Just Jul
+
+                8 ->
+                    Just Aug
+
+                9 ->
+                    Just Sep
+
+                10 ->
+                    Just Oct
+
+                11 ->
+                    Just Nov
+
+                12 ->
+                    Just Dec
+
+                _ ->
+                    Nothing
+        )
+
+
+monthToInt : Month -> Int
+monthToInt month =
+    case month of
+        Jan ->
+            1
+
+        Feb ->
+            2
+
+        Mar ->
+            3
+
+        Apr ->
+            4
+
+        May ->
+            5
+
+        Jun ->
+            6
+
+        Jul ->
+            7
+
+        Aug ->
+            8
+
+        Sep ->
+            9
+
+        Oct ->
+            10
+
+        Nov ->
+            11
+
+        Dec ->
+            12
 
 
 relationshipSelection : SelectionSet Relationship FamilyTree.Object.Relationship

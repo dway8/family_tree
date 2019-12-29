@@ -12,6 +12,7 @@ import Helpers
 import Model exposing (..)
 import RemoteData as RD exposing (RemoteData(..))
 import Set
+import Time
 import TypedSvg as Svg exposing (svg)
 import TypedSvg.Attributes as SA
 import TypedSvg.Attributes.InPx as InPx
@@ -188,54 +189,51 @@ viewPersonWithDescendants level originX originY ({ tree, relationships } as fami
                                         -- |> Debug.log ("children origin for " ++ person.firstName)
                                         positionAndViewForEachChild : Float -> List ( Float, SC.Svg Msg )
                                         positionAndViewForEachChild finalOffset =
-                                            rel.children
+                                            children
+                                                -- |> List.sortBy (.birthDate >> .year >> Time.posixToMillis) TODO
+                                                |> List.reverse
                                                 |> List.indexedMap Tuple.pair
                                                 |> Dict.fromList
                                                 |> Dict.foldl
-                                                    (\idx childId positionAndViewChildrenAcc ->
-                                                        case Helpers.getPersonFromId tree childId of
-                                                            Nothing ->
-                                                                positionAndViewChildrenAcc
+                                                    (\idx child positionAndViewChildrenAcc ->
+                                                        let
+                                                            absolutePreviousSiblingPosition =
+                                                                Helpers.getAbsolutePosition absoluteFirstSiblingX1 children (idx - 1)
 
-                                                            Just child ->
-                                                                let
-                                                                    absolutePreviousSiblingPosition =
-                                                                        Helpers.getAbsolutePosition absoluteFirstSiblingX1 children (idx - 1)
+                                                            previousSiblingPosition =
+                                                                Dict.get (idx - 1) positionAndViewChildrenAcc
+                                                                    |> Maybe.map Tuple.first
+                                                                    |> Maybe.withDefault absolutePreviousSiblingPosition
 
-                                                                    previousSiblingPosition =
-                                                                        Dict.get (idx - 1) positionAndViewChildrenAcc
-                                                                            |> Maybe.map Tuple.first
-                                                                            |> Maybe.withDefault absolutePreviousSiblingPosition
+                                                            previousSiblingOffset =
+                                                                previousSiblingPosition - absolutePreviousSiblingPosition
 
-                                                                    previousSiblingOffset =
-                                                                        previousSiblingPosition - absolutePreviousSiblingPosition
+                                                            absolutePosition =
+                                                                Helpers.getAbsolutePosition absoluteFirstSiblingX1 children idx
+                                                                    + previousSiblingOffset
 
-                                                                    absolutePosition =
-                                                                        Helpers.getAbsolutePosition absoluteFirstSiblingX1 children idx
-                                                                            + previousSiblingOffset
+                                                            -- |> Debug.log ("absolute position for" ++ child.firstName)
+                                                            childrenBounds =
+                                                                Helpers.getChildrenBounds absolutePosition family child
 
-                                                                    -- |> Debug.log ("absolute position for" ++ child.firstName)
-                                                                    childrenBounds =
-                                                                        Helpers.getChildrenBounds absolutePosition family child
+                                                            maxX2ByLevel =
+                                                                Helpers.getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc absoluteFirstSiblingX1 family children idx
 
-                                                                    maxX2ByLevel =
-                                                                        Helpers.getPreviousSiblingsMaxX2ForEachLevel positionAndViewChildrenAcc absoluteFirstSiblingX1 family children idx
+                                                            offset =
+                                                                Helpers.getOffset childrenBounds maxX2ByLevel
 
-                                                                    offset =
-                                                                        Helpers.getOffset childrenBounds maxX2ByLevel
+                                                            -- |> Debug.log ("offset for " ++ child.firstName)
+                                                            x1 =
+                                                                absolutePosition
+                                                                    + offset
 
-                                                                    -- |> Debug.log ("offset for " ++ child.firstName)
-                                                                    x1 =
-                                                                        absolutePosition
-                                                                            + offset
-
-                                                                    -- |> Debug.log ("X1 for " ++ child.firstName)
-                                                                in
-                                                                positionAndViewChildrenAcc
-                                                                    |> Dict.insert idx
-                                                                        ( x1
-                                                                        , child |> viewPersonWithDescendants (level + 1) (x1 + finalOffset - personWidth / 2) (originY + heightBetweenParentsAndChildren) family
-                                                                        )
+                                                            -- |> Debug.log ("X1 for " ++ child.firstName)
+                                                        in
+                                                        positionAndViewChildrenAcc
+                                                            |> Dict.insert idx
+                                                                ( x1
+                                                                , child |> viewPersonWithDescendants (level + 1) (x1 + finalOffset - personWidth / 2) (originY + heightBetweenParentsAndChildren) family
+                                                                )
                                                     )
                                                     Dict.empty
                                                 |> Dict.values
@@ -383,12 +381,12 @@ viewPersonDialog family config =
     , body = personDialogBody family config
     , closable = Just PersonDialogClosed
     , footer =
-        case config.addingSpouseLastName of
+        case config.addingSpouse of
             Just _ ->
                 Just <| personDialogFooter config ConfirmRelationshipButtonPressed
 
             Nothing ->
-                case config.addingChildFirstName of
+                case config.addingChild of
                     Just _ ->
                         Just <| personDialogFooter config ConfirmChildButtonPressed
 
@@ -398,7 +396,7 @@ viewPersonDialog family config =
 
 
 personDialogBody : Family -> PersonDialogConfig -> Element Msg
-personDialogBody { tree, relationships } { person, addingSpouseLastName, addingSpouseFirstName, addingChildFirstName, addingChildSex } =
+personDialogBody { tree, relationships } { person, addingSpouse, addingChild } =
     column [ width fill, Font.size 16, UI.defaultSpacing ]
         [ el [ Font.bold, Font.size 20 ] <| text <| Helpers.getPersonName person
         , person.relationship
@@ -443,8 +441,8 @@ personDialogBody { tree, relationships } { person, addingSpouseLastName, addingS
                                                         |> Maybe.withDefault none
                                                 )
                                         )
-                                    , case ( addingChildFirstName, addingChildSex ) of
-                                        ( Just firstName, Just sex ) ->
+                                    , case addingChild of
+                                        Just { firstName, sex } ->
                                             row [ UI.defaultSpacing ]
                                                 [ el [] <|
                                                     UI.textInput []
@@ -471,8 +469,8 @@ personDialogBody { tree, relationships } { person, addingSpouseLastName, addingS
                                 ]
                 )
             |> Maybe.withDefault
-                (case ( addingSpouseLastName, addingSpouseFirstName ) of
-                    ( Just lastName, Just firstName ) ->
+                (case addingSpouse of
+                    Just { lastName, firstName } ->
                         row [ UI.defaultSpacing ]
                             [ el [] <|
                                 UI.textInput []
