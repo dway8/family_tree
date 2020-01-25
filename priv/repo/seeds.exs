@@ -17,7 +17,8 @@ olivier =
   %Person{
     last_name: "Manière",
     first_name: "Olivier",
-    sex: "Male"
+    sex: "Male",
+    birth_year: 1954
   }
   |> Repo.insert!()
 
@@ -25,7 +26,8 @@ blandine =
   %Person{
     last_name: "Jantet",
     first_name: "Blandine",
-    sex: "Female"
+    sex: "Female",
+    birth_year: 1959
   }
   |> Repo.insert!()
 
@@ -33,7 +35,8 @@ vianney =
   %Person{
     last_name: "Manière",
     first_name: "Vianney",
-    sex: "Male"
+    sex: "Male",
+    birth_year: 1987
   }
   |> Repo.insert!()
 
@@ -41,7 +44,8 @@ diane =
   %Person{
     last_name: "Manière",
     first_name: "Diane",
-    sex: "Female"
+    sex: "Female",
+    birth_year: 1988
   }
   |> Repo.insert!()
 
@@ -49,7 +53,8 @@ mederic =
   %Person{
     last_name: "Manière",
     first_name: "Médéric",
-    sex: "Male"
+    sex: "Male",
+    birth_year: 1992
   }
   |> Repo.insert!()
 
@@ -57,7 +62,8 @@ melchior =
   %Person{
     last_name: "Manière",
     first_name: "Melchior",
-    sex: "Male"
+    sex: "Male",
+    birth_year: 1993
   }
   |> Repo.insert!()
 
@@ -72,15 +78,8 @@ orlane =
   %Person{
     last_name: "Felix",
     first_name: "Orlane",
-    sex: "Female"
-  }
-  |> Repo.insert!()
-
-felix =
-  %Person{
-    last_name: "Manière",
-    first_name: "Felix",
-    sex: "Male"
+    sex: "Female",
+    birth_year: 1987
   }
   |> Repo.insert!()
 
@@ -88,13 +87,23 @@ timothee =
   %Person{
     last_name: "Manière",
     first_name: "Timothée",
-    sex: "Male"
+    sex: "Male",
+    birth_year: 2019
+  }
+  |> Repo.insert!()
+
+felix =
+  %Person{
+    last_name: "Manière",
+    first_name: "Felix",
+    sex: "Male",
+    birth_year: 2017
   }
   |> Repo.insert!()
 
 %Relationship{
   father_id: vianney.id,
   mother_id: orlane.id,
-  children: [felix.id, timothee.id]
+  children: [timothee.id, felix.id]
 }
 |> Repo.insert!()

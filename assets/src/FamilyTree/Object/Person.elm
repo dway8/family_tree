@@ -19,14 +19,34 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-birthDate : SelectionSet decodesTo FamilyTree.Object.FullDate -> SelectionSet decodesTo FamilyTree.Object.Person
-birthDate object_ =
-    Object.selectionForCompositeField "birthDate" [] object_ identity
+birthDay : SelectionSet (Maybe Int) FamilyTree.Object.Person
+birthDay =
+    Object.selectionForField "(Maybe Int)" "birthDay" [] (Decode.int |> Decode.nullable)
 
 
-deathDate : SelectionSet decodesTo FamilyTree.Object.FullDate -> SelectionSet decodesTo FamilyTree.Object.Person
-deathDate object_ =
-    Object.selectionForCompositeField "deathDate" [] object_ identity
+birthMonth : SelectionSet (Maybe Int) FamilyTree.Object.Person
+birthMonth =
+    Object.selectionForField "(Maybe Int)" "birthMonth" [] (Decode.int |> Decode.nullable)
+
+
+birthYear : SelectionSet (Maybe Int) FamilyTree.Object.Person
+birthYear =
+    Object.selectionForField "(Maybe Int)" "birthYear" [] (Decode.int |> Decode.nullable)
+
+
+deathDay : SelectionSet (Maybe Int) FamilyTree.Object.Person
+deathDay =
+    Object.selectionForField "(Maybe Int)" "deathDay" [] (Decode.int |> Decode.nullable)
+
+
+deathMonth : SelectionSet (Maybe Int) FamilyTree.Object.Person
+deathMonth =
+    Object.selectionForField "(Maybe Int)" "deathMonth" [] (Decode.int |> Decode.nullable)
+
+
+deathYear : SelectionSet (Maybe Int) FamilyTree.Object.Person
+deathYear =
+    Object.selectionForField "(Maybe Int)" "deathYear" [] (Decode.int |> Decode.nullable)
 
 
 firstName : SelectionSet String FamilyTree.Object.Person

@@ -190,8 +190,7 @@ viewPersonWithDescendants level originX originY ({ tree, relationships } as fami
                                         positionAndViewForEachChild : Float -> List ( Float, SC.Svg Msg )
                                         positionAndViewForEachChild finalOffset =
                                             children
-                                                -- |> List.sortBy (.birthDate >> .year >> Time.posixToMillis) TODO
-                                                |> List.reverse
+                                                |> List.sortBy (\p -> p.birthDate.year |> Maybe.withDefault 0)
                                                 |> List.indexedMap Tuple.pair
                                                 |> Dict.fromList
                                                 |> Dict.foldl

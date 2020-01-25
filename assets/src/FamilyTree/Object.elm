@@ -9,10 +9,6 @@ type Family
     = Family
 
 
-type FullDate
-    = FullDate
-
-
 type Person
     = Person
 

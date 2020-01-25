@@ -4,7 +4,6 @@ import FamilyTree.InputObject
 import FamilyTree.Mutation as Mutation
 import FamilyTree.Object
 import FamilyTree.Object.Family as Family
-import FamilyTree.Object.FullDate as FullDate
 import FamilyTree.Object.Person as Person
 import FamilyTree.Object.Relationship as Relationship
 import FamilyTree.Query as Query
@@ -89,16 +88,24 @@ personSelection =
         |> with Person.lastName
         |> with (SelectionSet.map Model.sexFromString Person.sex)
         |> with Person.relationshipId
-        |> with (Person.birthDate fullDateSelection)
-        |> with (Person.deathDate fullDateSelection)
+        |> with birthDateFragment
+        |> with deathDateFragment
 
 
-fullDateSelection : SelectionSet FullDate FamilyTree.Object.FullDate
-fullDateSelection =
+birthDateFragment : SelectionSet FullDate FamilyTree.Object.Person
+birthDateFragment =
     SelectionSet.succeed FullDate
-        |> with FullDate.day
-        |> with (SelectionSet.map monthFromInt FullDate.month)
-        |> with FullDate.year
+        |> with Person.birthDay
+        |> with (SelectionSet.map monthFromInt Person.birthMonth)
+        |> with Person.birthYear
+
+
+deathDateFragment : SelectionSet FullDate FamilyTree.Object.Person
+deathDateFragment =
+    SelectionSet.succeed FullDate
+        |> with Person.deathDay
+        |> with (SelectionSet.map monthFromInt Person.deathMonth)
+        |> with Person.deathYear
 
 
 monthFromInt : Maybe Int -> Maybe Month
